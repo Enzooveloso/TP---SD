@@ -4,11 +4,29 @@ from .models import Aluno, Monografia, Professor, Banca
 from .forms import AlunoForm, MonografiaForm, ProfessorForm, BancaForm
 
 # CRUD Monografia
+# 
 class MonografiaListView(ListView):
     model = Monografia
     template_name = 'monografia_list.html'
     context_object_name = 'monografias'
+    paginate_by = 10  # Paginação
 
+    # função de busca para diferentes critérios
+    def get_queryset(self):
+        queryset = super().get_queryset() # pega todos os objetos
+        query = self.request.GET.get('q') # parâmetro de busca da URL
+        if query:
+             queryset = queryset.filter(
+                Q(titulo__icontains=query) |
+                Q(resumo__icontains=query) |
+                Q(abstract__icontains=query) |
+                Q(palavras_chave__icontains=query) |
+                Q(orientador__user__first_name__icontains=query) |
+                Q(orientador__user__last_name__icontains=query) |
+                Q(aluno__user__first_name__icontains=query) |
+                Q(aluno__user__last_name__icontains=query)
+            )
+        return queryset.order_by('-data_publicacao') # ordenacao por mais recente
 
 class MonografiaCreateView(CreateView):
     model = Monografia
