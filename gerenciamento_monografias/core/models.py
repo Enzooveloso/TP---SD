@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings  # Para referenciar o modelo User padrão
+from simple_history.models import HistoricalRecords  # Import para histórico de mudanças
 
 
 # Modelo para o perfil de Professor (servirá para Orientador, Coorientador e Avaliadores)
@@ -65,6 +66,7 @@ class Monografia(models.Model):
     palavras_chave = models.CharField(
         max_length=255, verbose_name="Palavras-Chave", help_text="Separadas por vírgula"
     )
+    history = HistoricalRecords() # para ter histórico de mudanças
     # Campo para o upload do arquivo da monografia
     arquivo_documento = models.FileField(
         upload_to='monografias/', # Subpasta dentro do diretório de mídia

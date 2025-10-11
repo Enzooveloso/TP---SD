@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     "allauth.account",
     # "allauth.socialaccount",
     # "django.contrib.sites",  # Adicionado para o allauth
-    "simple_history",
+    "simple_history", # Para histórico de mudanças nos modelos
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -58,8 +58,9 @@ AUTHENTICATION_BACKENDS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware", 
     "django.middleware.common.CommonMiddleware",
+    'simple_history.middleware.HistoryRequestMiddleware',
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
