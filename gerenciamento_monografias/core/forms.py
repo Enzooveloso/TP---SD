@@ -6,7 +6,7 @@ class MonografiaForm(forms.ModelForm):
         model = Monografia
         fields = [
             'titulo', 'resumo', 'abstract', 'palavras_chave', 'status',
-            'aluno', 'orientador', 'coorientador'
+            'aluno', 'orientador', 'coorientador', 'arquivo_documento'
         ]
 
         # Opcional: Adicionar widgets para melhorar a interface,

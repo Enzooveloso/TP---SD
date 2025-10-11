@@ -65,6 +65,13 @@ class Monografia(models.Model):
     palavras_chave = models.CharField(
         max_length=255, verbose_name="Palavras-Chave", help_text="Separadas por vírgula"
     )
+    # Campo para o upload do arquivo da monografia
+    arquivo_documento = models.FileField(
+        upload_to='monografias/', # Subpasta dentro do diretório de mídia
+        blank=True, # permite que o campo fique em branco
+        null=True,  # permite que o valor no banco de dados seja nulo
+        verbose_name="Documento (PDF)"
+    )
 
     status = models.CharField(
         max_length=3,

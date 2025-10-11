@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config  # Importe a função config
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -174,3 +175,7 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"
 # Configuração do provedor de e-mail (para desenvolvimento)
 # Isso fará com que os e-mails de verificação sejam impressos no console
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# CONFIGURAÇÃO DE ARQUIVOS DE MÍDIA
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
