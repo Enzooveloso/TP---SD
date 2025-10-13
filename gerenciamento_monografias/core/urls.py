@@ -3,7 +3,7 @@ from .views import (
     AlunoListView, AlunoCreateView, AlunoUpdateView, AlunoDeleteView,
     ProfessorListView, ProfessorCreateView, ProfessorUpdateView, ProfessorDeleteView,
     MonografiaListView, MonografiaDetailView, MonografiaCreateView, MonografiaUpdateView, MonografiaDeleteView,
-    BancaListView, BancaDetailView, BancaCreateView, BancaUpdateView, BancaDeleteView, HomePageView, DashboardView
+    BancaListView, BancaDetailView, BancaCreateView, BancaUpdateView, BancaDeleteView, HomePageView, DashboardView, MonografiaHistoryView
 )
 
 # URLs de Aluno
@@ -29,6 +29,7 @@ monografia_patterns = [
     path('new/', MonografiaCreateView.as_view(), name='monografia_new'),
     path('<int:pk>/edit/', MonografiaUpdateView.as_view(), name='monografia_edit'),
     path('<int:pk>/delete/', MonografiaDeleteView.as_view(), name='monografia_delete'),
+    path('<int:pk>/history/', MonografiaHistoryView.as_view(), name='monografia_history'),
 ]
 
 # URLs de Banca

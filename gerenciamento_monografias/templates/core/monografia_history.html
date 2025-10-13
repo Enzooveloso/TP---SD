@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Alterações: {{ monografia.titulo }}{% endblock %}
+
+{% block content %}
+    <h1>Histórico de Alterações</h1>
+    <h2>{{ monografia.titulo }}</h2>
+
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; border-bottom: 2px solid #eee;">
+                    <th style="padding: 10px;">Data</th>
+                    <th style="padding: 10px;">Tipo de Mudança</th>
+                    <th style="padding: 10px;">Usuário</th>
+                    <th style="padding: 10px;">Resumo da Mudança</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in history_records %}
+                <tr style="border-bottom: 1px solid #f2f2f2;">
+                    <td style="padding: 10px;">{{ record.history_date|date:"d/m/Y H:i" }}</td>
+                    <td style="padding: 10px;">{{ record.get_history_type_display }}</td>
+                    <td style="padding: 10px;">{{ record.history_user|default:"Sistema" }}</td>
+                    <td style="padding: 10px;">{{ record.history_change_reason|default:"Nenhum resumo fornecido." }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center;">Nenhum histórico de alteração encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{% url 'monografia_detail' monografia.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #6c757d; margin-top: 20px;">Voltar aos Detalhes</a>
+{% endblock %}

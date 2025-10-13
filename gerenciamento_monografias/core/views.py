@@ -208,3 +208,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context['user_type'] = 'Usuário sem perfil definido'
 
         return context
+    
+class MonografiaHistoryView(LoginRequiredMixin, DetailView):
+    """
+    Exibe o histórico de alterações de uma monografia específica.
+    """
+    model = Monografia
+    template_name = 'core/monografia_history.html'
+    context_object_name = 'monografia' # Renomeia o 'object' para 'monografia' para clareza
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # O 'django-simple-history' nos dá acesso ao histórico através do atributo .history
+        context['history_records'] = self.get_object().history.all()
+        return context

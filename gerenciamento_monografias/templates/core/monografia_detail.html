@@ -47,6 +47,8 @@
             {% if perms.core.can_delete_monografia %}
                 <a href="{% url 'monografia_delete' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #dc3545;">Excluir Monografia</a>
             {% endif %}
+            
+            <a href="{% url 'monografia_history' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #17a2b8;">Ver Histórico</a>
         </div>
     </div>
 {% endblock %}
