@@ -41,7 +41,6 @@ class MonografiaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     template_name = 'core/monografia_form.html'
     success_url = reverse_lazy('monografia_list')
 
-    # --- MÉTODO ATUALIZADO ---
     def test_func(self):
         """
         Verifica duas condições:
@@ -65,28 +64,36 @@ class MonografiaDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         """
-        Adiciona a variável 'can_manage' ao contexto do template.
+        Adiciona variáveis de permissão ao contexto para simplificar o template.
         """
         context = super().get_context_data(**kwargs)
         monografia = self.get_object()
         user = self.request.user
         
-        # Inicia a variável de permissão como Falsa
-        can_manage = False
+        can_manage_monografia = False
+        can_manage_banca = False
 
-        # Verifica todas as condições da sua regra de negócio
         if user.is_staff:
-            can_manage = True
+            can_manage_monografia = True
         elif hasattr(user, 'aluno_profile') and monografia.aluno == user.aluno_profile:
-            can_manage = True
+            can_manage_monografia = True
         elif hasattr(user, 'professor_profile'):
             professor_profile = user.professor_profile
             if monografia.orientador == professor_profile or \
                (monografia.coorientador and monografia.coorientador == professor_profile):
-                can_manage = True
+                can_manage_monografia = True
+        
+        # Lógica de permissão para gerenciar a BANCA (agendar, editar)
+        if user.is_staff:
+            can_manage_banca = True
+        elif hasattr(user, 'professor_profile'):
+            professor_profile = user.professor_profile
+            if monografia.orientador == professor_profile or \
+               (monografia.coorientador and monografia.coorientador == professor_profile):
+                can_manage_banca = True
 
-        # Adiciona a variável True/False ao contexto que será enviado para o HTML
-        context['can_manage'] = can_manage
+        context['can_manage_monografia'] = can_manage_monografia
+        context['can_manage_banca'] = can_manage_banca
         return context
 
 class MonografiaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -214,7 +221,29 @@ class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     success_url = reverse_lazy('banca_list')
 
     def test_func(self):
-        return is_professor(self.request.user)
+        """
+        Permite o acesso apenas se o utilizador for admin ou o orientador/coorientador
+        da monografia que está a ser agendada.
+        """
+        user = self.request.user
+        if user.is_staff:
+            return True
+        
+        monografia_id = self.request.GET.get('monografia')
+        if not monografia_id:
+            return False # Nega o acesso se a URL for acedida sem o ID da monografia
+
+        try:
+            monografia = Monografia.objects.get(pk=monografia_id)
+            if hasattr(user, 'professor_profile'):
+                professor_profile = user.professor_profile
+                # Verifica se o professor logado é o orientador OU o coorientador
+                return monografia.orientador == professor_profile or \
+                       (monografia.coorientador and monografia.coorientador == professor_profile)
+        except Monografia.DoesNotExist:
+            return False
+            
+        return False
 
     def get_initial(self):
         initial = super().get_initial()
@@ -230,7 +259,25 @@ class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     success_url = reverse_lazy('banca_list')
 
     def test_func(self):
-        return is_professor(self.request.user)
+        """
+        Permite a edição apenas se o utilizador for admin ou o orientador/coorientador
+        da monografia associada à banca.
+        """
+        user = self.request.user
+        if user.is_staff:
+            return True
+
+        # Apanha o objeto da banca e, a partir dele, a monografia
+        banca = self.get_object()
+        monografia = banca.monografia
+        
+        if hasattr(user, 'professor_profile'):
+            professor_profile = user.professor_profile
+            # Verifica se o professor logado é o orientador OU o coorientador
+            return monografia.orientador == professor_profile or \
+                   (monografia.coorientador and monografia.coorientador == professor_profile)
+        
+        return False
 
 class BancaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Banca
