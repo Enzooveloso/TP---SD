@@ -108,6 +108,9 @@ class Monografia(models.Model):
     class Meta:
         verbose_name = "Monografia"
         verbose_name_plural = "Monografias"
+        permissions = [
+            ("can_delete_monografia", "Pode deletar monografia"),
+        ]
 
 
 # Modelo para a Banca Examinadora

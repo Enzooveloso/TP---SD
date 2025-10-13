@@ -1,5 +1,6 @@
 from django import forms
 from .models import Aluno, Banca, Monografia, Professor
+from django.contrib.auth.models import User
 
 class MonografiaForm(forms.ModelForm):
     class Meta:
@@ -14,6 +15,19 @@ class MonografiaForm(forms.ModelForm):
         widgets = {
             'data_publicacao': forms.DateInput(attrs={'type': 'date'}),
         }
+    def clean(self):
+        # Pega todos os dados já validados do formulário
+        cleaned_data = super().clean()
+        orientador = cleaned_data.get("orientador")
+        coorientador = cleaned_data.get("coorientador")
+
+            # Nossa regra de negócio
+        if orientador and coorientador and orientador == coorientador:
+                # Se a regra for violada 
+            raise forms.ValidationError(
+                "O orientador e o coorientador não podem ser a mesma pessoa."
+            )
+        return cleaned_data     
 
 class BancaForm(forms.ModelForm):
     class Meta:
@@ -27,20 +41,22 @@ class BancaForm(forms.ModelForm):
         }
 
 class AlunoForm(forms.ModelForm):
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(aluno_profile__isnull=True),
+        label="Usuário"
+    )
     class Meta:
         model = Aluno
-        fields = [
-            'nome',
-            'matricula',
-            'email',
-        ]
+        
+        fields = ['user', 'matricula']
+
 
 class ProfessorForm(forms.ModelForm):
+    user = forms.ModelChoiceField(
+        queryset=User.objects.filter(professor_profile__isnull=True),
+        label="Usuário"
+    )
+
     class Meta:
         model = Professor
-        fields = [
-            'nome',
-            'email',
-            'titulacao',
-            'area_pesquisa',
-        ]
+        fields = ['user', 'titulacao', 'area_pesquisa']

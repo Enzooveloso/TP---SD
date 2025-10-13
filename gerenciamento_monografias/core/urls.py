@@ -1,4 +1,10 @@
 from django.urls import path, include
+from .views import (
+    AlunoListView, AlunoCreateView, AlunoUpdateView, AlunoDeleteView,
+    ProfessorListView, ProfessorCreateView, ProfessorUpdateView, ProfessorDeleteView,
+    MonografiaListView, MonografiaDetailView, MonografiaCreateView, MonografiaUpdateView, MonografiaDeleteView,
+    BancaListView, BancaDetailView, BancaCreateView, BancaUpdateView, BancaDeleteView
+)
 
 # URLs de Aluno
 aluno_patterns = [

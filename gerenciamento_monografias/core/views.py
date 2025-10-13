@@ -1,10 +1,11 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
+from django.db.models import Q
 from .models import Aluno, Monografia, Professor, Banca
 from .forms import AlunoForm, MonografiaForm, ProfessorForm, BancaForm
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 # CRUD Monografia
-# 
 class MonografiaListView(ListView):
     model = Monografia
     template_name = 'monografia_list.html'
@@ -34,6 +35,10 @@ class MonografiaCreateView(CreateView):
     form_class = MonografiaForm
     success_url = reverse_lazy('monografia_list')
 
+class MonografiaDetailView(DetailView):
+    model = Monografia
+    template_name = 'core/monografia_detail.html'
+
 
 class MonografiaUpdateView(UpdateView):
     model = Monografia
@@ -42,10 +47,14 @@ class MonografiaUpdateView(UpdateView):
     success_url = reverse_lazy('monografia_list')
 
 
-class MonografiaDeleteView(DeleteView):
+class MonografiaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Monografia
     template_name = 'monografia_confirm_delete.html'
     success_url = reverse_lazy('monografia_list')
+
+    permission_required = 'core.can_delete_monografia'
+
+    raise_exception = True 
 
 #CRUD Aluno
 class AlunoListView(ListView):
