@@ -90,18 +90,22 @@
         .form-content { text-align: left; }
         .form-content form p { margin-bottom: 20px; }
         .form-content label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        .form-content input[type="text"],
-        .form-content input[type="email"],
-        .form-content input[type="password"],
-        .form-content input[type="file"],
-        .form-content textarea,
-        .form-content select {
-            width: 100%; padding: 12px 15px; border: 1px solid var(--input-border);
-            border-radius: var(--border-radius); font-size: 1rem;
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--input-border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
-        .form-content input:focus, .form-content textarea:focus, .form-content select:focus {
-            outline: none; border-color: var(--input-focus-border);
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
         .form-button {
@@ -124,7 +128,7 @@
 <body>
 
     <nav class="navbar">
-        <a href="{% url 'home' %}" class="navbar-brand">Monografias.net</a>
+        <a href="{% url 'home' %}" class="navbar-brand">Monografias UFVJM</a>
         <div class="navbar-links">
             {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">Meu Dashboard</a>

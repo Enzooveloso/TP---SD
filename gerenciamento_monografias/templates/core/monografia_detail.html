@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load user_filters %}
 
 {% block title %}{{ object.titulo }}{% endblock %}
 
@@ -20,9 +21,13 @@
         <h3>Resumo e Palavras-Chave</h3>
         <p><strong>Resumo:</strong> {{ object.resumo|linebreaks }}</p>
         <p><strong>Palavras-Chave:</strong> {{ object.palavras_chave }}</p>
-
+        
         {% if object.arquivo_documento %}
-            <p style="margin-top: 15px;"><strong><a href="{{ object.arquivo_documento.url }}" target="_blank" class="form-button" style="display:inline-block; width:auto;">Baixar Documento</a></strong></p>
+            {% if can_manage %}
+                <p style="margin-top: 15px;"><strong><a href="{{ object.arquivo_documento.url }}" target="_blank" class="form-button" style="display:inline-block; width:auto;">Baixar Documento</a></strong></p>
+            {% else %}
+                 <p style="margin-top: 15px;"><em>O download do documento está disponível apenas para o autor e orientadores.</em></p>
+            {% endif %}
         {% endif %}
 
         {% if user.is_staff or user|is_professor %}
@@ -37,18 +42,18 @@
                 <a href="{% url 'banca_new' %}?monografia={{ object.pk }}" class="form-button" style="display:inline-block; width: auto; margin-top: 10px;">Agendar Banca</a>
             {% endif %}
         {% endif %}
+        
         <div style="margin-top: 30px;">
             <a href="{% url 'monografia_list' %}" class="form-button" style="display:inline-block; width: auto; background-color: #6c757d;">Voltar para a Lista</a>
             
-            {% if user == object.aluno.user or user == object.orientador.user or user.is_staff %}
+            {% if can_manage %}
                 <a href="{% url 'monografia_edit' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #ffc107;">Editar Monografia</a>
+                <a href="{% url 'monografia_history' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #17a2b8;">Ver Histórico</a>
             {% endif %}
 
             {% if perms.core.can_delete_monografia %}
                 <a href="{% url 'monografia_delete' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #dc3545;">Excluir Monografia</a>
             {% endif %}
-            
-            <a href="{% url 'monografia_history' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #17a2b8;">Ver Histórico</a>
         </div>
     </div>
 {% endblock %}

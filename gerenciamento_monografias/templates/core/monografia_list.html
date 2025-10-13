@@ -5,14 +5,16 @@
 {% block content %}
     <h1>Monografias Cadastradas</h1>
     
-    <form method="GET" action="{% url 'monografia_list' %}" style="margin-bottom: 20px; display: flex; gap: 10px;">
+    <form method="GET" action="{% url 'monografia_list' %}" style="margin-bottom: 10px; display: flex; gap: 10px;">
         <input type="text" name="q" placeholder="Buscar por título, autor, orientador, palavra-chave..." value="{{ request.GET.q }}" style="flex-grow: 1;">
         <button type="submit" class="form-button" style="width: auto; padding: 10px 20px; margin-top:0;">Buscar</button>
     </form>
 
-    {% if perms.core.add_monografia or is_professor %}
-        <a href="{% url 'monografia_new' %}" class="form-button" style="display: inline-block; width: auto; margin-bottom: 20px;">+ Adicionar Nova Monografia</a>
-    {% endif %}
+    {% for group in request.user.groups.all %}
+        {% if group.name == 'Alunos' %}
+            <a href="{% url 'monografia_new' %}" class="form-button" style="display: inline-block; width: auto; margin-bottom: 20px;">+ Adicionar Nova Monografia</a>
+        {% endif %}
+    {% endfor %}
     
     {% for monografia in monografias %}
         <div class="card">

@@ -10,9 +10,14 @@
     </header>
 
     <section class="form-content">
-        <form method="post" action="{% url 'account_signup' %}">
+        <form id="signup_form" method="post" action="{% url 'account_signup' %}">
             {% csrf_token %}
+            
             {{ form.as_p }}
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
             <button class="form-button" type="submit">Cadastrar</button>
         </form>
     </section>
@@ -21,4 +26,28 @@
         <a href="{% url 'account_login' %}">Já tem uma conta? Faça o login</a>
     </footer>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Encontra os elementos do formulário pelos seus IDs, que o Django cria automaticamente
+        const userTypeSelect = document.getElementById('id_user_type');
+        const titulacaoField = document.getElementById('id_titulacao').parentElement; // Pega o <p> que envolve o campo
+        const areaPesquisaField = document.getElementById('id_area_pesquisa').parentElement; // Pega o <p> que envolve o campo
+
+        function toggleProfessorFields() {
+            const isProfessor = userTypeSelect.value === 'professor';
+            
+            // Mostra ou oculta os elementos <p> inteiros
+            titulacaoField.style.display = isProfessor ? 'block' : 'none';
+            areaPesquisaField.style.display = isProfessor ? 'block' : 'none';
+        }
+
+        // Garante que os campos estejam no estado correto quando a página carrega
+        toggleProfessorFields();
+
+        // Adiciona o 'listener' para o evento de mudança
+        userTypeSelect.addEventListener('change', toggleProfessorFields);
+    });
+</script>
+
 {% endblock %}

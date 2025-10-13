@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
-
-{% block title %}Detalhes da Banca: {{ object.monografia.titulo }}{% endblock %}
+{% load user_filters %}  {% block title %}Detalhes da Banca: {{ object.monografia.titulo }}{% endblock %}
 
 {% block content %}
     <div class="card">
@@ -13,7 +12,7 @@
         <p><strong>Nota Final:</strong> {{ object.nota_final|default:"Ainda não avaliada" }}</p>
 
         <h3 style="margin-top: 20px;">Membros da Banca</h3>
-        <ul>
+        <ul style="padding-left: 20px;">
             {% for avaliador in object.avaliadores.all %}
                 <li>{{ avaliador.user.get_full_name|default:avaliador.user.username }}</li>
             {% empty %}
