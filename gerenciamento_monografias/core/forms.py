@@ -1,6 +1,6 @@
 from django import forms
 from .models import Aluno, Banca, Monografia, Professor
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 class MonografiaForm(forms.ModelForm):
     class Meta:
@@ -35,8 +35,6 @@ class BancaForm(forms.ModelForm):
         fields = ['monografia', 'avaliadores', 'data_defesa', 'local_defesa', 'nota_final']
         widgets = {
             'data_defesa': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            # Renderiza ManyToManyField como uma caixa de seleção múltipla por padrão.
-            # Um widget de Checkbox.
             'avaliadores': forms.CheckboxSelectMultiple,
         }
 
@@ -60,3 +58,31 @@ class ProfessorForm(forms.ModelForm):
     class Meta:
         model = Professor
         fields = ['user', 'titulacao', 'area_pesquisa']
+
+class CustomSignupForm(forms.Form):
+    """
+    Este formulário estende o formulário de registro padrão do allauth
+    para incluir um campo de seleção de tipo de usuário.
+    """
+    user_type = forms.ChoiceField(
+        choices=[('aluno', 'Sou Aluno'), ('professor', 'Sou Professor')],
+        label="Eu sou",
+        required=True
+    )
+
+    def signup(self, request, user):
+        """
+        Esta função é chamada após o usuário preencher o formulário
+        e o usuário base (com username/email/senha) já ter sido criado.
+        """
+        user_type = self.cleaned_data['user_type']
+        
+
+        if user_type == 'aluno':
+            group = Group.objects.get(name='Alunos')
+        elif user_type == 'professor':
+            group = Group.objects.get(name='Professores')
+
+        user.groups.add(group)
+
+        user.save()

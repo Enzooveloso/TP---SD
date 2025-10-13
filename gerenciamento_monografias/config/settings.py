@@ -172,6 +172,7 @@ ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_LOGIN_METHODS = ["email"]
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_SIGNUP_FORM_CLASS = 'core.forms.CustomSignupForm'
 
 # Configuração do provedor de e-mail (para desenvolvimento)
 # Isso fará com que os e-mails de verificação sejam impressos no console

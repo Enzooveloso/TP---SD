@@ -1,9 +1,22 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, TemplateView
 from django.urls import reverse_lazy
 from django.db.models import Q
 from .models import Aluno, Monografia, Professor, Banca
 from .forms import AlunoForm, MonografiaForm, ProfessorForm, BancaForm
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import PermissionDenied
+
+def is_admin(user):
+    """ Verifica se o usuário é um administrador (staff). """
+    return user.is_staff
+
+def is_professor(user):
+    """ Verifica se o usuário pertence ao grupo 'Professores'. """
+    return user.groups.filter(name='Professores').exists()
+
+def is_aluno(user):
+    """ Verifica se o usuário pertence ao grupo 'Alunos'. """
+    return user.groups.filter(name='Alunos').exists()
 
 # CRUD Monografia
 class MonografiaListView(ListView):
@@ -29,22 +42,41 @@ class MonografiaListView(ListView):
             )
         return queryset.order_by('-data_publicacao') # ordenacao por mais recente
 
-class MonografiaCreateView(CreateView):
+class MonografiaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Monografia
-    template_name = 'monografia_form.html'
     form_class = MonografiaForm
+    template_name = 'monografia_form.html'
     success_url = reverse_lazy('monografia_list')
+
+    def test_func(self):
+        return is_professor(self.request.user)
 
 class MonografiaDetailView(DetailView):
     model = Monografia
     template_name = 'core/monografia_detail.html'
 
 
-class MonografiaUpdateView(UpdateView):
+class MonografiaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Monografia
-    template_name = 'monografia_form.html'
     form_class = MonografiaForm
+    template_name = 'monografia_form.html'
     success_url = reverse_lazy('monografia_list')
+
+    def test_func(self):
+
+        monografia = self.get_object()
+        user = self.request.user
+
+        if user.is_staff:
+            return True
+        
+        if hasattr(user, 'aluno_profile') and monografia.aluno == user.aluno_profile:
+            return True
+            
+        if hasattr(user, 'professor_profile') and monografia.orientador == user.professor_profile:
+            return True
+
+        return False
 
 
 class MonografiaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
@@ -54,7 +86,7 @@ class MonografiaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteVi
 
     permission_required = 'core.can_delete_monografia'
 
-    raise_exception = True 
+    raise_exception = True
 
 #CRUD Aluno
 class AlunoListView(ListView):
@@ -112,19 +144,59 @@ class BancaDetailView(DetailView):
     model = Banca
     template_name = 'core/banca_detail.html'
 
-class BancaCreateView(CreateView):
+class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Banca
     form_class = BancaForm
     template_name = 'core/banca_form.html'
     success_url = reverse_lazy('banca_list')
 
-class BancaUpdateView(UpdateView):
+    def test_func(self):
+        return is_professor(self.request.user)
+
+class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Banca
     form_class = BancaForm
     template_name = 'core/banca_form.html'
     success_url = reverse_lazy('banca_list')
+
+    def test_func(self):
+        return is_professor(self.request.user)
 
 class BancaDeleteView(DeleteView):
     model = Banca
     template_name = 'core/confirm_delete.html'
     success_url = reverse_lazy('banca_list')
+
+class HomePageView(TemplateView):
+    """
+    Renderiza a página principal (pública) do sistema.
+    """
+    template_name = "home.html"
+
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'dashboard.html'
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        if hasattr(user, 'aluno_profile'):
+            context['user_type'] = 'Aluno'
+            # Usamos um try-except para o caso do aluno ainda não ter uma monografia
+            try:
+                context['monografia'] = user.aluno_profile.monografia
+            except Monografia.DoesNotExist:
+                context['monografia'] = None
+        
+        #  se o usuário TEM um perfil de professor associado
+        elif hasattr(user, 'professor_profile'):
+            context['user_type'] = 'Professor'
+            # BUsca todas as monografias que este professor orienta
+            context['monografias_orientadas'] = Monografia.objects.filter(orientador=user.professor_profile)
+        
+        else:
+            context['user_type'] = 'Usuário sem perfil definido'
+
+        return context

@@ -3,7 +3,7 @@ from .views import (
     AlunoListView, AlunoCreateView, AlunoUpdateView, AlunoDeleteView,
     ProfessorListView, ProfessorCreateView, ProfessorUpdateView, ProfessorDeleteView,
     MonografiaListView, MonografiaDetailView, MonografiaCreateView, MonografiaUpdateView, MonografiaDeleteView,
-    BancaListView, BancaDetailView, BancaCreateView, BancaUpdateView, BancaDeleteView
+    BancaListView, BancaDetailView, BancaCreateView, BancaUpdateView, BancaDeleteView, HomePageView, DashboardView
 )
 
 # URLs de Aluno
@@ -46,4 +46,6 @@ urlpatterns = [
     path('professores/', include(professor_patterns)),
     path('monografias/', include(monografia_patterns)),
     path('bancas/', include(banca_patterns)),
+    path('', HomePageView.as_view(), name='home'),
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
 ]
