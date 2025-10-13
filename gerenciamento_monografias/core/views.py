@@ -153,6 +153,14 @@ class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def test_func(self):
         return is_professor(self.request.user)
 
+    def get_initial(self):
+        """ Pré-seleciona a monografia se o ID for passado na URL. """
+        initial = super().get_initial()
+        monografia_id = self.request.GET.get('monografia')
+        if monografia_id:
+            initial['monografia'] = monografia_id
+        return initial
+
 class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Banca
     form_class = BancaForm
