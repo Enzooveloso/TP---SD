@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gerenciador de Monografias{% endblock %}</title>
+    <style>
+        /* CSS Unificado - Agora em um único lugar! */
+        :root {
+            --primary-color: #007bff;
+            --primary-color-dark: #0056b3;
+            --background-light: #f4f7f6;
+            --text-color: #333;
+            --card-background: #ffffff;
+            --input-border: #ccc;
+            --input-focus-border: #007bff;
+            --error-color: #dc3545;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-light);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* --- Barra de Navegação --- */
+        .navbar {
+            background-color: var(--card-background);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .navbar-links a:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* --- Container Principal --- */
+        .main-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        
+        /* --- Estilo para Cards e Listas --- */
+        .card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+        }
+
+        /* --- Estilos para Formulários (Auth e CRUD) --- */
+        .form-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--card-background);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin: 40px auto;
+            text-align: center;
+        }
+        .form-header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .form-header p { color: #777; margin-bottom: 30px; }
+        .form-content { text-align: left; }
+        .form-content form p { margin-bottom: 20px; }
+        .form-content label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .form-content input[type="text"],
+        .form-content input[type="email"],
+        .form-content input[type="password"],
+        .form-content input[type="file"],
+        .form-content textarea,
+        .form-content select {
+            width: 100%; padding: 12px 15px; border: 1px solid var(--input-border);
+            border-radius: var(--border-radius); font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-content input:focus, .form-content textarea:focus, .form-content select:focus {
+            outline: none; border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .form-button {
+            width: 100%; padding: 15px; border: none; background-color: var(--primary-color);
+            color: white; font-size: 1.1rem; font-weight: 600; border-radius: var(--border-radius);
+            cursor: pointer; transition: background-color 0.3s ease; margin-top: 10px; text-decoration: none;
+        }
+        .form-button:hover { background-color: var(--primary-color-dark); }
+        .form-links { margin-top: 25px; font-size: 0.9rem; }
+        .form-links a { color: var(--primary-color); text-decoration: none; }
+        .form-links a:hover { text-decoration: underline; }
+        
+        .errorlist {
+            list-style-type: none; padding: 10px; margin-bottom: 15px;
+            background-color: rgba(220, 53, 69, 0.1); color: var(--error-color);
+            border: 1px solid rgba(220, 53, 69, 0.2); border-radius: var(--border-radius);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="navbar-brand">Monografias.net</a>
+        <div class="navbar-links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}">Meu Dashboard</a>
+                <a href="{% url 'monografia_list' %}">Ver Monografias</a>
+                <a href="{% url 'account_logout' %}">Sair</a>
+            {% else %}
+                <a href="{% url 'account_login' %}">Entrar</a>
+                <a href="{% url 'account_signup' %}">Cadastrar</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="main-container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
+</html>

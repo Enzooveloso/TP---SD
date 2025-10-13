@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar Monografia{% else %}Nova Monografia{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <header class="form-header">
+        <h1>{% if object %}Editar Monografia{% else %}Adicionar Nova Monografia{% endif %}</h1>
+    </header>
+
+    <section class="form-content">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="form-button" type="submit">Salvar</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

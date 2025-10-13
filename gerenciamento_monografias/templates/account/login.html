@@ -1,126 +1,25 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Login | Sua Plataforma</title>
-        <style>
-        /* CSS Unificado para Autenticação */
-        :root {
-            --primary-color: #007bff;
-            --primary-color-dark: #0056b3;
-            --background-light: #f4f7f6;
-            --text-color: #333;
-            --card-background: #ffffff;
-            --input-border: #ccc;
-            --input-focus-border: #007bff;
-            --error-color: #dc3545;
-            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            --border-radius: 8px;
-        }
+{% extends 'base.html' %}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% block title %}Login | Gerenciador de Monografias{% endblock %}
 
-        body {
-            font-family: var(--font-family);
-            background-color: var(--background-light);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+{% block content %}
+<div class="form-container">
+    <header class="form-header">
+        <h1>Bem-vindo!</h1>
+        <p>Faça login para continuar</p>
+    </header>
 
-        .auth-container {
-            width: 100%;
-            max-width: 420px;
-            background-color: var(--card-background);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
+    <section class="form-content">
+        <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="form-button" type="submit">Entrar</button>
+        </form>
+    </section>
 
-        .auth-container:hover { transform: translateY(-5px); }
-        .auth-header h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-color); }
-        .auth-header p { color: #777; margin-bottom: 30px; }
-        .auth-form { text-align: left; }
-        .auth-form form p { margin-bottom: 20px; }
-        .auth-form label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-
-        .auth-form input[type="text"],
-        .auth-form input[type="email"],
-        .auth-form input[type="password"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--input-border);
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .auth-form input:focus {
-            outline: none;
-            border-color: var(--input-focus-border);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-
-        .auth-button {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            background-color: var(--primary-color);
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .auth-button:hover { background-color: var(--primary-color-dark); }
-        .auth-links { margin-top: 25px; font-size: 0.9rem; }
-        .auth-links a { color: var(--primary-color); text-decoration: none; transition: color 0.3s ease; }
-        .auth-links a:hover { text-decoration: underline; color: var(--primary-color-dark); }
-        
-        .errorlist {
-            list-style-type: none;
-            padding: 10px;
-            margin-bottom: 15px;
-            background-color: rgba(220, 53, 69, 0.1);
-            color: var(--error-color);
-            border: 1px solid rgba(220, 53, 69, 0.2);
-            border-radius: var(--border-radius);
-            font-size: 0.9rem;
-        }
-    </style>
-    </head>
-    <body>
-
-        <main class="auth-container">
-            <header class="auth-header">
-                <h1>Bem-vindo!</h1>
-                <p>Faça login para continuar</p>
-            </header>
-
-            <section class="auth-form">
-                <form method="post" action="{% url 'account_login' %}">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button class="auth-button" type="submit">Entrar</button>
-                </form>
-            </section>
-
-            <footer class="auth-links">
-                <a href="#">Esqueceu sua senha?</a> |
-                <a href="{% url 'account_signup' %}">Não tem uma conta?
-                    Cadastre-se</a>
-            </footer>
-        </main>
-
-    </body>
-</html>
+    <footer class="form-links">
+        <a href="{% url 'account_reset_password' %}">Esqueceu sua senha?</a> |
+        <a href="{% url 'account_signup' %}">Não tem uma conta? Cadastre-se</a>
+    </footer>
+</div>
+{% endblock %}
