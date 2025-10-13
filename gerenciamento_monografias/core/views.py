@@ -108,7 +108,7 @@ class AlunoUpdateView(UpdateView):
 
 class AlunoDeleteView(DeleteView):
     model = Aluno
-    template_name = 'aluno_confirm_delete.html'
+    template_name = 'core/confirm_delete.html'
     success_url = reverse_lazy('aluno_list')
 
 #CRUD Professor
@@ -131,7 +131,7 @@ class ProfessorUpdateView(UpdateView):
 
 class ProfessorDeleteView(DeleteView):
     model = Professor
-    template_name = 'professor_confirm_delete.html'
+    template_name = 'core/confirm_delete.html'
     success_url = reverse_lazy('professor_list')
 
 #CRUD Banca

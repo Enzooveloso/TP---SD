@@ -129,6 +129,11 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">Meu Dashboard</a>
                 <a href="{% url 'monografia_list' %}">Ver Monografias</a>
+
+                {% if user.is_staff %}
+                    <a href="{% url 'aluno_list' %}">Gerenciar Alunos</a>
+                    <a href="{% url 'professor_list' %}">Gerenciar Professores</a>
+                {% endif %}
                 <a href="{% url 'account_logout' %}">Sair</a>
             {% else %}
                 <a href="{% url 'account_login' %}">Entrar</a>
