@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar Professor{% else %}Adicionar Professor{% endif %}{% endblock %}
+{% block title %}{% if object %}Editar Professor{% else %}Adicionar Professor{%
+endif %}{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <header class="form-header">
-        <h1>{% if object %}Editar Perfil de Professor{% else %}Adicionar Novo Professor{% endif %}</h1>
-         {% if object %}
-            <p>Editando perfil de <strong>{{ object.user.get_full_name|default:object.user.username }}</strong></p>
+        <h1>{% if object %}Editar Perfil de Professor{% else %}Adicionar Novo
+            Professor{% endif %}</h1>
+        {% if object %}
+        <p>Editando perfil de <strong>{{
+                object.user.get_full_name|default:object.user.username
+                }}</strong></p>
         {% else %}
-            <p>Selecione um usuário base para criar o perfil de professor.</p>
+        <p>Selecione um usuário base para criar o perfil de professor.</p>
         {% endif %}
     </header>
 

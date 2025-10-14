@@ -3,16 +3,18 @@
 {% block title %}Bancas Agendadas{% endblock %}
 
 {% block content %}
-    <h1>Bancas Agendadas</h1>
+<h1>Bancas Agendadas</h1>
 
-    {% for banca in bancas %}
-        <div class="card">
-            <h3><a href="{% url 'banca_detail' banca.pk %}">Banca para: {{ banca.monografia.titulo }}</a></h3>
-            <p><strong>Aluno(a):</strong> {{ banca.monografia.aluno }}</p>
-            <p><strong>Data da Defesa:</strong> {{ banca.data_defesa|date:"d/m/Y \à\s H:i" }}</p>
-            <p><strong>Local:</strong> {{ banca.local_defesa }}</p>
-        </div>
-    {% empty %}
-        <p>Nenhuma banca agendada no sistema.</p>
-    {% endfor %}
+{% for banca in bancas %}
+<div class="card">
+    <h3><a href="{% url 'banca_detail' banca.pk %}">Banca para: {{
+            banca.monografia.titulo }}</a></h3>
+    <p><strong>Aluno(a):</strong> {{ banca.monografia.aluno }}</p>
+    <p><strong>Data da Defesa:</strong> {{
+        banca.data_defesa|date:"d/m/Y \à\s H:i" }}</p>
+    <p><strong>Local:</strong> {{ banca.local_defesa }}</p>
+</div>
+{% empty %}
+<p>Nenhuma banca agendada no sistema.</p>
+{% endfor %}
 {% endblock %}

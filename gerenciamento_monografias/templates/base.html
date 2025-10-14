@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gerenciador de Monografias{% endblock %}</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Gerenciador de Monografias{% endblock %}</title>
+        <style>
         /* CSS Unificado - Agora em um único lugar! */
         :root {
             --primary-color: #007bff;
@@ -124,32 +124,33 @@
             border: 1px solid rgba(220, 53, 69, 0.2); border-radius: var(--border-radius);
         }
     </style>
-</head>
-<body>
+    </head>
+    <body>
 
-    <nav class="navbar">
-        <a href="{% url 'home' %}" class="navbar-brand">Monografias UFVJM</a>
-        <div class="navbar-links">
-            {% if user.is_authenticated %}
+        <nav class="navbar">
+            <a href="{% url 'home' %}" class="navbar-brand">Monografias
+                UFVJM</a>
+            <div class="navbar-links">
+                {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">Meu Dashboard</a>
                 <a href="{% url 'monografia_list' %}">Ver Monografias</a>
 
                 {% if user.is_staff %}
-                    <a href="{% url 'aluno_list' %}">Gerenciar Alunos</a>
-                    <a href="{% url 'professor_list' %}">Gerenciar Professores</a>
+                <a href="{% url 'aluno_list' %}">Gerenciar Alunos</a>
+                <a href="{% url 'professor_list' %}">Gerenciar Professores</a>
                 {% endif %}
                 <a href="{% url 'account_logout' %}">Sair</a>
-            {% else %}
+                {% else %}
                 <a href="{% url 'account_login' %}">Entrar</a>
                 <a href="{% url 'account_signup' %}">Cadastrar</a>
-            {% endif %}
-        </div>
-    </nav>
+                {% endif %}
+            </div>
+        </nav>
 
-    <main class="main-container">
-        {% block content %}
-        {% endblock %}
-    </main>
+        <main class="main-container">
+            {% block content %}
+            {% endblock %}
+        </main>
 
-</body>
+    </body>
 </html>

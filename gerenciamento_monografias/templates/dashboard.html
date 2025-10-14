@@ -3,31 +3,37 @@
 {% block title %}Meu Dashboard{% endblock %}
 
 {% block content %}
-    <h1>Dashboard</h1>
-    <p>Olá, {{ user.get_full_name|default:user.username }}. Você está logado como <strong>{{ user_type }}</strong>.</p>
-    <hr style="margin: 20px 0;">
+<h1>Dashboard</h1>
+<p>Olá, {{ user.get_full_name|default:user.username }}. Você está logado como
+    <strong>{{ user_type }}</strong>.</p>
+<hr style="margin: 20px 0;">
 
-    <div class="card">
+<div class="card">
     {% if user_type == 'Aluno' %}
-        <h2>Sua Monografia</h2>
-        {% if monografia %}
-            <p><strong>Título:</strong> {{ monografia.titulo }}</p>
-            <p><strong>Status:</strong> {{ monografia.get_status_display }}</p>
-            <a href="{% url 'monografia_detail' monografia.pk %}" class="form-button" style="display:inline-block; width: auto; margin-top: 10px;">Ver Detalhes</a>
-        {% else %}
-            <p>Você ainda não possui uma monografia cadastrada no sistema.</p>
-        {% endif %}
-    {% elif user_type == 'Professor' %}
-        <h2>Monografias que você orienta</h2>
-        <ul style="list-style: none; padding-left: 0;">
-        {% for monografia in monografias_orientadas %}
-            <li style="margin-bottom: 10px;"><a href="{% url 'monografia_detail' monografia.pk %}">{{ monografia.titulo }}</a> - por {{ monografia.aluno }}</li>
-        {% empty %}
-            <li>Você não está orientando nenhuma monografia no momento.</li>
-        {% endfor %}
-        </ul>
+    <h2>Sua Monografia</h2>
+    {% if monografia %}
+    <p><strong>Título:</strong> {{ monografia.titulo }}</p>
+    <p><strong>Status:</strong> {{ monografia.get_status_display }}</p>
+    <a href="{% url 'monografia_detail' monografia.pk %}" class="form-button"
+        style="display:inline-block; width: auto; margin-top: 10px;">Ver
+        Detalhes</a>
     {% else %}
-        <p>Seu perfil de usuário não está completamente configurado. Entre em contato com o administrador.</p>
+    <p>Você ainda não possui uma monografia cadastrada no sistema.</p>
     {% endif %}
-    </div>
+    {% elif user_type == 'Professor' %}
+    <h2>Monografias que você orienta</h2>
+    <ul style="list-style: none; padding-left: 0;">
+        {% for monografia in monografias_orientadas %}
+        <li style="margin-bottom: 10px;"><a
+                href="{% url 'monografia_detail' monografia.pk %}">{{
+                monografia.titulo }}</a> - por {{ monografia.aluno }}</li>
+        {% empty %}
+        <li>Você não está orientando nenhuma monografia no momento.</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>Seu perfil de usuário não está completamente configurado. Entre em
+        contato com o administrador.</p>
+    {% endif %}
+</div>
 {% endblock %}
