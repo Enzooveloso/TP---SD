@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Monografias{% endblock %}
+
+{% block content %}
+    <h1>Monografias Cadastradas</h1>
+    
+    <form method="GET" action="{% url 'monografia_list' %}" style="margin-bottom: 10px; display: flex; gap: 10px;">
+        <input type="text" name="q" placeholder="Buscar por título, autor, orientador, palavra-chave..." value="{{ request.GET.q }}" style="flex-grow: 1;">
+        <button type="submit" class="form-button" style="width: auto; padding: 10px 20px; margin-top:0;">Buscar</button>
+    </form>
+
+    {% for group in request.user.groups.all %}
+        {% if group.name == 'Alunos' %}
+            <a href="{% url 'monografia_new' %}" class="form-button" style="display: inline-block; width: auto; margin-bottom: 20px;">+ Adicionar Nova Monografia</a>
+        {% endif %}
+    {% endfor %}
+    
+    {% for monografia in monografias %}
+        <div class="card">
+            <h3><a href="{% url 'monografia_detail' monografia.pk %}">{{ monografia.titulo }}</a></h3>
+            <p><strong>Autor:</strong> {{ monografia.aluno }} | <strong>Orientador:</strong> {{ monografia.orientador }}</p>
+            <p><strong>Status:</strong> {{ monografia.get_status_display }}</p>
+        </div>
+    {% empty %}
+        <p>Nenhuma monografia encontrada.</p>
+    {% endfor %}
+
+    {% if is_paginated %}
+        <div class="pagination" style="margin-top: 20px;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            {% endif %}
+            <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

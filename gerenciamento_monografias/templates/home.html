@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Bem-vindo ao Gerenciador de Monografias{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 50px;">
+    <h1>Sistema de Gerenciamento de Monografias</h1>
+    <p style="font-size: 1.2rem; margin-top: 20px;">
+        A plataforma definitiva para gerenciar trabalhos acadêmicos, orientadores e bancas.
+    </p>
+    
+    {% if not user.is_authenticated %}
+        <div style="margin-top: 40px;">
+            <a href="{% url 'account_login' %}" class="form-button" style="display: inline-block; width: auto; padding: 15px 30px; margin-right: 10px;">Entrar</a>
+            <a href="{% url 'account_signup' %}" class="form-button" style="display: inline-block; width: auto; padding: 15px 30px; background-color: #6c757d;">Cadastrar</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load user_filters %}
+
+{% block title %}{{ object.titulo }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h1>{{ object.titulo }}</h1>
+        <p><strong>Status:</strong> {{ object.get_status_display }}</p>
+        <hr style="margin: 20px 0;">
+
+        <h3>Autoria e Orientação</h3>
+        <p><strong>Autor:</strong> {{ object.aluno.user.get_full_name|default:object.aluno.user.username }} (Matrícula: {{ object.aluno.matricula }})</p>
+        <p><strong>Orientador:</strong> {{ object.orientador.user.get_full_name|default:object.orientador.user.username }}</p>
+        {% if object.coorientador %}<p><strong>Coorientador:</strong> {{ object.coorientador.user.get_full_name }}</p>{% endif %}
+
+        <hr style="margin: 20px 0;">
+        <h3>Resumo e Palavras-Chave</h3>
+        <p><strong>Resumo:</strong> {{ object.resumo|linebreaks }}</p>
+        <p><strong>Palavras-Chave:</strong> {{ object.palavras_chave }}</p>
+        
+        {% if object.arquivo_documento %}
+            {% if can_manage_monografia %}
+                <p style="margin-top: 15px;"><strong><a href="{{ object.arquivo_documento.url }}" target="_blank" class="form-button" style="display:inline-block; width:auto;">Baixar Documento</a></strong></p>
+            {% else %}
+                 <p style="margin-top: 15px;"><em>O download do documento está disponível apenas para o autor e orientadores.</em></p>
+            {% endif %}
+        {% endif %}
+
+        {% if can_manage_banca %}
+            <hr style="margin: 20px 0;">
+            <h3>Ações da Banca</h3>
+            {% if object.banca %}
+                <p>A banca para esta monografia já está agendada.</p>
+                <a href="{% url 'banca_detail' object.banca.pk %}" class="form-button" style="display:inline-block; width: auto; margin-top: 10px;">Ver Detalhes da Banca</a>
+                <a href="{% url 'banca_edit' object.banca.pk %}" class="form-button" style="display:inline-block; width: auto; margin-top: 10px; background-color: #ffc107;">Editar Banca</a>
+            {% else %}
+                <p>Esta monografia ainda não tem uma banca agendada.</p>
+                <a href="{% url 'banca_new' %}?monografia={{ object.pk }}" class="form-button" style="display:inline-block; width: auto; margin-top: 10px;">Agendar Banca</a>
+            {% endif %}
+        {% endif %}
+        
+        <div style="margin-top: 30px;">
+            <a href="{% url 'monografia_list' %}" class="form-button" style="display:inline-block; width: auto; background-color: #6c757d;">Voltar para a Lista</a>
+            
+            {% if can_manage_monografia %}
+                <a href="{% url 'monografia_edit' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #ffc107;">Editar Monografia</a>
+                <a href="{% url 'monografia_history' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #17a2b8;">Ver Histórico</a>
+            {% endif %}
+
+            {% if perms.core.can_delete_monografia %}
+                <a href="{% url 'monografia_delete' object.pk %}" class="form-button" style="display:inline-block; width: auto; background-color: #dc3545;">Excluir Monografia</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
