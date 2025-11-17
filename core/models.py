@@ -1,6 +1,10 @@
 from django.db import models
 from django.conf import settings  # Para referenciar o modelo User padrão
+from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
+from django.utils import timezone
 from simple_history.models import HistoricalRecords  # Import para histórico de mudanças
+
+from .validators import validate_future_date, validate_pdf_extension
 
 
 # Modelo para o perfil de Professor (servirá para Orientador, Coorientador e Avaliadores)
@@ -67,11 +71,17 @@ class Monografia(models.Model):
         max_length=255, verbose_name="Palavras-Chave", help_text="Separadas por vírgula"
     )
     history = HistoricalRecords()  # para ter histórico de mudanças
-    # Campo para o upload do arquivo da monografia
+    data_defesa = models.DateField(
+        null=True,
+        blank=True,
+        validators=[validate_future_date],
+        verbose_name="Data da Defesa",
+    )
     arquivo_documento = models.FileField(
-        upload_to="monografias/",  # Subpasta dentro do diretório de mídia
-        blank=True,  # permite que o campo fique em branco
-        null=True,  # permite que o valor no banco de dados seja nulo
+        upload_to="monografias/",
+        validators=[FileExtensionValidator(["pdf"]), validate_pdf_extension],
+        blank=True,
+        null=True,
         verbose_name="Documento (PDF)",
     )
 
@@ -105,12 +115,30 @@ class Monografia(models.Model):
     def __str__(self):
         return self.titulo
 
+    def clean(self):
+        errors = {}
+        if (
+            self.orientador
+            and self.coorientador
+            and self.orientador_id == self.coorientador_id
+        ):
+            errors["coorientador"] = "O orientador e o coorientador precisam ser diferentes."
+
+        if self.data_defesa and self.data_defesa < timezone.now().date():
+            errors["data_defesa"] = "A data da defesa não pode estar no passado."
+
+        if errors:
+            from django.core.exceptions import ValidationError
+
+            raise ValidationError(errors)
+
     class Meta:
         verbose_name = "Monografia"
         verbose_name_plural = "Monografias"
         permissions = [
             ("can_delete_monografia", "Pode deletar monografia"),
         ]
+        ordering = ["-data_publicacao", "titulo"]
 
 
 # Modelo para a Banca Examinadora
@@ -123,16 +151,29 @@ class Banca(models.Model):
     # Relação muitos-para-muitos com Professores. A banca é composta por vários professores.
     avaliadores = models.ManyToManyField(Professor, related_name="bancas_avaliadas")
 
-    data_defesa = models.DateTimeField(verbose_name="Data e Hora da Defesa")
+    data_defesa = models.DateTimeField(
+        verbose_name="Data e Hora da Defesa", validators=[validate_future_date]
+    )
     local_defesa = models.CharField(max_length=255, verbose_name="Local da Defesa")
 
     # Usamos DecimalField para precisão na nota.
     nota_final = models.DecimalField(
-        max_digits=4, decimal_places=2, null=True, blank=True, verbose_name="Nota Final"
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Nota Final",
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
 
     def __str__(self):
         return f"Banca da monografia: {self.monografia.titulo}"
+
+    def clean(self):
+        if self.data_defesa and self.data_defesa.date() < timezone.now().date():
+            from django.core.exceptions import ValidationError
+
+            raise ValidationError({"data_defesa": "A data da banca não pode estar no passado."})
 
     class Meta:
         verbose_name = "Banca"

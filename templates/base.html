@@ -134,6 +134,8 @@
                 {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">Meu Dashboard</a>
                 <a href="{% url 'monografia_list' %}">Ver Monografias</a>
+                <a href="{% url 'banca_list' %}">Bancas</a>
+                <a href="{% url 'api_dashboard' %}">API Dashboard</a>
 
                 {% if user.is_staff %}
                 <a href="{% url 'aluno_list' %}">Gerenciar Alunos</a>
@@ -146,6 +148,16 @@
                 {% endif %}
             </div>
         </nav>
+
+        {% if messages %}
+        <div class="main-container" style="padding-top: 10px;">
+            {% for message in messages %}
+            <div class="card" style="border-left: 4px solid var(--primary-color); margin-top:10px;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <main class="main-container">
             {% block content %}

@@ -13,10 +13,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config  # Importe a função config
 import os
+import sys
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,7 +31,9 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip() for host in config("ALLOWED_HOSTS", default="").split(",") if host.strip()
+] or ["*"]
 
 
 # Application definition
@@ -40,13 +45,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "core",
+    "django.contrib.sites",
+    "core.apps.CoreConfig",
+    "rest_framework",
+    "django_filters",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     # Apps do Allauth
     "allauth",
     "allauth.account",
     # "allauth.socialaccount",
     # "django.contrib.sites",  # Adicionado para o allauth
-    "simple_history", # Para histórico de mudanças nos modelos
+    "simple_history",  # Para histórico de mudanças nos modelos
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -103,11 +113,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "NAME": config("POSTGRES_DB", default=config("DB_NAME", default="si")),
+        "USER": config("POSTGRES_USER", default=config("DB_USER", default="si")),
+        "PASSWORD": config("POSTGRES_PASSWORD", default=config("DB_PASSWORD", default="si")),
+        "HOST": config("POSTGRES_HOST", default=config("DB_HOST", default="db")),
+        "PORT": config("POSTGRES_PORT", default=config("DB_PORT", default=5432)),
     }
 }
 
@@ -131,6 +141,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        "NAME": "core.validators.PasswordComplexityValidator",
+    },
 ]
 
 
@@ -150,6 +163,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -161,18 +175,35 @@ SITE_ID = 1
 
 # Para onde redirecionar o usuário após o login
 LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "account_login"
 
-# Configurações do Allauth
-ACCOUNT_SIGNUP_FIELDS = [
-    "email*",
-    "password1*",
-]  # Adicionado '*' ao email e o campo 'password'
-
+# Configurações do Allauth (usando nova API)
+ACCOUNT_LOGIN_METHODS = {"email"}
+# Ao usar login por e-mail, deixa a lista vazia para evitar conflito com LOGIN_METHODS
+ACCOUNT_SIGNUP_FIELDS = []
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_LOGIN_METHODS = ["email"]
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"
-ACCOUNT_SIGNUP_FORM_CLASS = 'core.forms.CustomSignupForm'
+ACCOUNT_SIGNUP_FORM_CLASS = "core.forms.CustomSignupForm"
+ACCOUNT_RATE_LIMITS = {"login_failed": "10/5m"}
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "core.api.pagination.DefaultPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
 
 # Configuração do provedor de e-mail (para desenvolvimento)
 # Isso fará com que os e-mails de verificação sejam impressos no console
@@ -181,3 +212,42 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # CONFIGURAÇÃO DE ARQUIVOS DE MÍDIA
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} [{module}:{lineno}] {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "auditoria_file": {
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "auditoria.log",
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
+    },
+    "loggers": {
+        "auditoria": {
+            "handlers": ["console", "auditoria_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": True,
+        },
+    },
+}

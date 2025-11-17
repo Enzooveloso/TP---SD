@@ -1,34 +1,52 @@
 {% extends 'base.html' %}
+{% load user_filters %}
 
 {% block title %}Lista de Monografias{% endblock %}
 
 {% block content %}
 <h1>Monografias Cadastradas</h1>
 
-<form method="GET" action="{% url 'monografia_list' %}"
-    style="margin-bottom: 10px; display: flex; gap: 10px;">
-    <input type="text" name="q"
-        placeholder="Buscar por título, autor, orientador, palavra-chave..."
-        value="{{ request.GET.q }}" style="flex-grow: 1;">
-    <button type="submit" class="form-button"
-        style="width: auto; padding: 10px 20px; margin-top:0;">Buscar</button>
+<form method="GET" action="{% url 'monografia_list' %}" style="margin-bottom: 16px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" name="q"
+            placeholder="Buscar por título, resumo, autor, orientador..."
+            value="{{ termo_busca }}" style="flex:2 1 240px;">
+        <select name="status" style="flex:1 1 160px; padding: 10px;">
+            <option value="">Todos os status</option>
+            {% for value,label in status_choices %}
+            <option value="{{ value }}" {% if filtro_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="ordenar" style="flex:1 1 160px; padding: 10px;">
+            <option value="publicacao" {% if ordenar_escolhido == 'publicacao' %}selected{% endif %}>Mais recentes</option>
+            <option value="titulo" {% if ordenar_escolhido == 'titulo' %}selected{% endif %}>Título A-Z</option>
+            <option value="titulo_desc" {% if ordenar_escolhido == 'titulo_desc' %}selected{% endif %}>Título Z-A</option>
+            <option value="status" {% if ordenar_escolhido == 'status' %}selected{% endif %}>Status</option>
+            <option value="defesa" {% if ordenar_escolhido == 'defesa' %}selected{% endif %}>Data da defesa</option>
+        </select>
+        <button type="submit" class="form-button"
+            style="width: auto; padding: 10px 20px; margin-top:0;">Filtrar</button>
+    </div>
 </form>
 
-{% for group in request.user.groups.all %}
-{% if group.name == 'Alunos' %}
+{% if request.user|is_aluno %}
 <a href="{% url 'monografia_new' %}" class="form-button"
     style="display: inline-block; width: auto; margin-bottom: 20px;">+ Adicionar
     Nova Monografia</a>
 {% endif %}
-{% endfor %}
 
 {% for monografia in monografias %}
 <div class="card">
-    <h3><a href="{% url 'monografia_detail' monografia.pk %}">{{
-            monografia.titulo }}</a></h3>
-    <p><strong>Autor:</strong> {{ monografia.aluno }} |
-        <strong>Orientador:</strong> {{ monografia.orientador }}</p>
-    <p><strong>Status:</strong> {{ monografia.get_status_display }}</p>
+    <h3><a href="{% url 'monografia_detail' monografia.pk %}">{{ monografia.titulo }}</a></h3>
+    <p><strong>Autor:</strong> {{ monografia.aluno.user.get_full_name|default:monografia.aluno.user.username }}</p>
+    <p><strong>Orientação:</strong> {{ monografia.orientador }}
+        {% if monografia.coorientador %} | <strong>Coorientador:</strong> {{ monografia.coorientador }}{% endif %}
+    </p>
+    <p><strong>Status:</strong> {{ monografia.get_status_display }} | <strong>Publicação:</strong> {{ monografia.data_publicacao }}
+        {% if monografia.data_defesa %} | <strong>Defesa:</strong> {{ monografia.data_defesa }}{% endif %}
+    </p>
+    <a href="{% url 'monografia_detail' monografia.pk %}" class="form-button"
+        style="display:inline-block; width:auto; margin-top: 10px;">Ver detalhes</a>
 </div>
 {% empty %}
 <p>Nenhuma monografia encontrada.</p>
@@ -37,12 +55,11 @@
 {% if is_paginated %}
 <div class="pagination" style="margin-top: 20px;">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ termo_busca }}&status={{ filtro_status }}&ordenar={{ ordenar_escolhido }}">Anterior</a>
     {% endif %}
-    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages
-        }}</span>
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+    <a href="?page={{ page_obj.next_page_number }}&q={{ termo_busca }}&status={{ filtro_status }}&ordenar={{ ordenar_escolhido }}">Próxima</a>
     {% endif %}
 </div>
 {% endif %}

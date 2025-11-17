@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.generic import TemplateView
 from .views import (
     AlunoListView,
     AlunoCreateView,
@@ -66,6 +67,8 @@ urlpatterns = [
     path("professores/", include(professor_patterns)),
     path("monografias/", include(monografia_patterns)),
     path("bancas/", include(banca_patterns)),
+    path("api/", include("core.api.urls")),
+    path("api-dashboard/", TemplateView.as_view(template_name="api_dashboard.html"), name="api_dashboard"),
     path("", HomePageView.as_view(), name="home"),
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
 ]

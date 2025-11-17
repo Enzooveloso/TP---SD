@@ -11,10 +11,27 @@
             banca.monografia.titulo }}</a></h3>
     <p><strong>Aluno(a):</strong> {{ banca.monografia.aluno }}</p>
     <p><strong>Data da Defesa:</strong> {{
-        banca.data_defesa|date:"d/m/Y \à\s H:i" }}</p>
+        banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}</p>
     <p><strong>Local:</strong> {{ banca.local_defesa }}</p>
+    <p><strong>Avaliadores:</strong>
+        {% for avaliador in banca.avaliadores.all %}
+        {{ avaliador.user.get_full_name|default:avaliador.user.username }}{% if not forloop.last %}, {% endif %}
+        {% empty %}Não informado{% endfor %}
+    </p>
 </div>
 {% empty %}
 <p>Nenhuma banca agendada no sistema.</p>
 {% endfor %}
+
+{% if is_paginated %}
+<div class="pagination" style="margin-top: 20px;">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+    {% endif %}
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

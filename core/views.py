@@ -7,7 +7,9 @@ from django.views.generic import (
     TemplateView,
 )
 from django.urls import reverse_lazy
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.contrib import messages
+from django.utils import timezone
 from .models import Aluno, Monografia, Professor, Banca
 from .forms import AlunoForm, MonografiaForm, ProfessorForm, BancaForm
 from django.contrib.auth.mixins import (
@@ -15,7 +17,6 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
-from django.core.exceptions import PermissionDenied
 
 
 def is_admin(user):
@@ -38,9 +39,19 @@ class MonografiaListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related(
+                "aluno__user",
+                "orientador__user",
+                "coorientador__user",
+            )
+        )
+        query = (self.request.GET.get("q") or "").strip()
+        status = self.request.GET.get("status")
+        ordenar = self.request.GET.get("ordenar")
 
-        queryset = super().get_queryset()
-        query = self.request.GET.get("q")
         if query:
             queryset = queryset.filter(
                 Q(titulo__icontains=query)
@@ -49,10 +60,31 @@ class MonografiaListView(LoginRequiredMixin, ListView):
                 | Q(palavras_chave__icontains=query)
                 | Q(orientador__user__first_name__icontains=query)
                 | Q(orientador__user__last_name__icontains=query)
+                | Q(coorientador__user__first_name__icontains=query)
+                | Q(coorientador__user__last_name__icontains=query)
                 | Q(aluno__user__first_name__icontains=query)
                 | Q(aluno__user__last_name__icontains=query)
             )
-        return queryset.order_by("-data_publicacao")
+        if status in dict(Monografia.StatusMonografia.choices):
+            queryset = queryset.filter(status=status)
+
+        ordering_map = {
+            "titulo": "titulo",
+            "titulo_desc": "-titulo",
+            "status": "status",
+            "publicacao": "-data_publicacao",
+            "defesa": "data_defesa",
+        }
+        ordering = ordering_map.get(ordenar, "-data_publicacao")
+        return queryset.order_by(ordering, "titulo")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = Monografia.StatusMonografia.choices
+        context["filtro_status"] = self.request.GET.get("status", "")
+        context["ordenar_escolhido"] = self.request.GET.get("ordenar", "")
+        context["termo_busca"] = self.request.GET.get("q", "")
+        return context
 
 
 class MonografiaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -83,7 +115,14 @@ class MonografiaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             return self.form_invalid(form)
 
         form.instance.aluno = self.request.user.aluno_profile
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, "Monografia cadastrada com sucesso.")
+        return response
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
 
 class MonografiaDetailView(LoginRequiredMixin, DetailView):
@@ -157,13 +196,43 @@ class MonografiaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         # Se nenhuma das condições for atendida, nega o acesso.
         return False
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Monografia atualizada com sucesso.")
+        return response
 
-class MonografiaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+class MonografiaDeleteView(
+    LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin, DeleteView
+):
     model = Monografia
     template_name = "core/monografia_confirm_delete.html"
     success_url = reverse_lazy("monografia_list")
     permission_required = "core.can_delete_monografia"
     raise_exception = True
+
+    def test_func(self):
+        monografia = self.get_object()
+        user = self.request.user
+        if user.is_staff:
+            return True
+        if hasattr(user, "aluno_profile") and monografia.aluno == user.aluno_profile:
+            return True
+        if hasattr(user, "professor_profile"):
+            professor_profile = user.professor_profile
+            return monografia.orientador == professor_profile or (
+                monografia.coorientador and monografia.coorientador == professor_profile
+            )
+        return False
+
+    def delete(self, request, *args, **kwargs):
+        messages.warning(request, "Monografia removida.")
+        return super().delete(request, *args, **kwargs)
 
 
 # --- CRUD Aluno ---
@@ -249,11 +318,62 @@ class BancaListView(LoginRequiredMixin, ListView):
     model = Banca
     template_name = "core/banca_list.html"
     context_object_name = "bancas"
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related(
+                "monografia__aluno__user",
+                "monografia__orientador__user",
+                "monografia__coorientador__user",
+            )
+            .prefetch_related("avaliadores__user")
+        )
+        user = self.request.user
+        if user.is_staff:
+            return queryset
+        if hasattr(user, "professor_profile"):
+            professor = user.professor_profile
+            return queryset.filter(
+                Q(monografia__orientador=professor)
+                | Q(monografia__coorientador=professor)
+                | Q(avaliadores=professor)
+            ).distinct()
+        if hasattr(user, "aluno_profile"):
+            return queryset.filter(monografia__aluno=user.aluno_profile)
+        return queryset.none()
 
 
 class BancaDetailView(LoginRequiredMixin, DetailView):
     model = Banca
     template_name = "core/banca_detail.html"
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related(
+                "monografia__aluno__user",
+                "monografia__orientador__user",
+                "monografia__coorientador__user",
+            )
+            .prefetch_related("avaliadores__user")
+        )
+        user = self.request.user
+        if user.is_staff:
+            return queryset
+        if hasattr(user, "professor_profile"):
+            professor = user.professor_profile
+            return queryset.filter(
+                Q(monografia__orientador=professor)
+                | Q(monografia__coorientador=professor)
+                | Q(avaliadores=professor)
+            ).distinct()
+        if hasattr(user, "aluno_profile"):
+            return queryset.filter(monografia__aluno=user.aluno_profile)
+        return queryset.none()
 
 
 class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -271,12 +391,16 @@ class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if user.is_staff:
             return True
 
-        monografia_id = self.request.GET.get("monografia")
+        monografia_id = self.request.GET.get("monografia") or self.request.POST.get(
+            "monografia"
+        )
         if not monografia_id:
             return False  # Nega o acesso se a URL for acedida sem o ID da monografia
 
         try:
             monografia = Monografia.objects.get(pk=monografia_id)
+            if monografia.banca_id:
+                return False
             if hasattr(user, "professor_profile"):
                 professor_profile = user.professor_profile
                 # Verifica se o professor logado é o orientador OU o coorientador
@@ -295,6 +419,20 @@ class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         if monografia_id:
             initial["monografia"] = monografia_id
         return initial
+
+    def form_valid(self, form):
+        monografia = form.cleaned_data["monografia"]
+        if monografia.banca_id:
+            form.add_error("monografia", "Esta monografia já possui banca agendada.")
+            return self.form_invalid(form)
+
+        response = super().form_valid(form)
+        # Sincroniza a data da defesa no registro da monografia para facilitar filtros
+        if monografia.data_defesa != form.cleaned_data["data_defesa"].date():
+            monografia.data_defesa = form.cleaned_data["data_defesa"].date()
+            monografia.save(update_fields=["data_defesa"])
+        messages.success(self.request, "Banca agendada com sucesso.")
+        return response
 
 
 class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -325,14 +463,37 @@ class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
         return False
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        monografia = form.instance.monografia
+        defesa_date = form.cleaned_data.get("data_defesa")
+        if defesa_date:
+            monografia.data_defesa = defesa_date.date()
+            monografia.save(update_fields=["data_defesa"])
+        messages.success(self.request, "Banca atualizada com sucesso.")
+        return response
+
 
 class BancaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Banca
     template_name = "core/confirm_delete.html"
     success_url = reverse_lazy("banca_list")
+    raise_exception = True
 
     def test_func(self):
-        return is_professor(self.request.user) or self.request.user.is_staff
+        user = self.request.user
+        if user.is_staff:
+            return True
+        if not hasattr(user, "professor_profile"):
+            return False
+        banca = self.get_object()
+        return banca.monografia.orientador == user.professor_profile or (
+            banca.monografia.coorientador == user.professor_profile
+        )
+
+    def delete(self, request, *args, **kwargs):
+        messages.warning(request, "Banca excluída.")
+        return super().delete(request, *args, **kwargs)
 
 
 class HomePageView(TemplateView):
@@ -353,18 +514,34 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 context["monografia"] = None
         elif hasattr(user, "professor_profile"):
             context["user_type"] = "Professor"
+            professor = user.professor_profile
             context["monografias_orientadas"] = Monografia.objects.filter(
-                orientador=user.professor_profile
+                Q(orientador=professor) | Q(coorientador=professor)
             )
+            context["bancas_avaliador"] = Banca.objects.filter(
+                avaliadores=professor
+            ).select_related("monografia")
         else:
             context["user_type"] = "Usuário sem perfil definido"
+
+        context["total_monografias"] = Monografia.objects.count()
+        context["monografias_por_status"] = (
+            Monografia.objects.values("status").order_by().annotate(total=Count("id"))
+        )
+        context["status_labels"] = dict(Monografia.StatusMonografia.choices)
+        context["proximas_bancas"] = (
+            Banca.objects.filter(data_defesa__gte=timezone.now())
+            .select_related("monografia")
+            .order_by("data_defesa")[:5]
+        )
         return context
 
 
-class MonografiaHistoryView(LoginRequiredMixin, DetailView):
+class MonografiaHistoryView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Monografia
     template_name = "core/monografia_history.html"
     context_object_name = "monografia"
+    raise_exception = True
 
     def test_func(self):
         monografia = self.get_object()

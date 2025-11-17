@@ -1,49 +1,36 @@
 services:
   db:
-    image: postgres:16-alpine
-    container_name: si_db
+    image: postgres:15
+    container_name: monografias_db
     environment:
-      POSTGRES_DB: ${DB_NAME:-si}
-      POSTGRES_USER: ${DB_USER:-si}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-si}
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      POSTGRES_DB: ${POSTGRES_DB:-si}
+      POSTGRES_USER: ${POSTGRES_USER:-si}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-si}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  backend:
+    build: .
+    container_name: monografias_backend
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - venv_data:/app/.venv
+    ports:
+      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings}
-      # DATABASE_URL: ${DATABASE_URL:-postgres://${DB_USER:-si}:${DB_PASSWORD:-si}@db:${DB_PORT:-5432}/${DB_NAME:-si}}
-      DB_NAME: ${DB_NAME:-si}
-      DB_USER: ${DB_USER:-si}
-      DB_PASSWORD: ${DB_PASSWORD:-si}
-      DB_HOST: db
-      DB_PORT: ${DB_PORT:-5432}
-      DEBUG: "1"
-    ports:
-      - "${PORT:-8000}:8000"
-    volumes:
-      - .:/app
-      - .venv:/app/.venv
-    command: >
-      bash -lc "
-        poetry install --no-ansi --no-root &&
-        poetry run python manage.py migrate &&
-        poetry run python manage.py runserver 0.0.0.0:8000
-      "
     restart: unless-stopped
 
 volumes:
-  db_data:
+  postgres_data:
+  venv_data:

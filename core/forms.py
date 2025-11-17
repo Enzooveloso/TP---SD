@@ -1,6 +1,10 @@
 from django import forms
 from .models import Aluno, Banca, Monografia, Professor
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ValidationError
+
+
+PDF_HELP = "Envie um PDF de até 10MB."
 
 
 class MonografiaForm(forms.ModelForm):
@@ -11,6 +15,7 @@ class MonografiaForm(forms.ModelForm):
             "resumo",
             "abstract",
             "palavras_chave",
+            "data_defesa",
             "status",
             "orientador",
             "coorientador",
@@ -21,7 +26,23 @@ class MonografiaForm(forms.ModelForm):
         # por exemplo, usando um select mais amigável ou caixas de texto maiores.
         widgets = {
             "data_publicacao": forms.DateInput(attrs={"type": "date"}),
+            "data_defesa": forms.DateInput(attrs={"type": "date"}),
+            "resumo": forms.Textarea(attrs={"rows": 4}),
+            "abstract": forms.Textarea(attrs={"rows": 4}),
+            "palavras_chave": forms.TextInput(
+                attrs={"placeholder": "ex: inteligência artificial, redes neurais"}
+            ),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+        professor_qs = Professor.objects.select_related("user").all()
+        self.fields["orientador"].queryset = professor_qs
+        self.fields["coorientador"].queryset = professor_qs
+        self.fields["arquivo_documento"].help_text = PDF_HELP
+        self.fields["arquivo_documento"].required = self.instance.pk is None
+        self.fields["coorientador"].required = True
 
     def clean(self):
         # Pega todos os dados já validados do formulário
@@ -37,6 +58,12 @@ class MonografiaForm(forms.ModelForm):
             )
         return cleaned_data
 
+    def clean_arquivo_documento(self):
+        arquivo = self.cleaned_data.get("arquivo_documento")
+        if arquivo and arquivo.size > 10 * 1024 * 1024:
+            raise ValidationError("O arquivo não pode ultrapassar 10MB.")
+        return arquivo
+
 
 class BancaForm(forms.ModelForm):
     class Meta:
@@ -50,7 +77,7 @@ class BancaForm(forms.ModelForm):
         ]
         widgets = {
             "data_defesa": forms.DateTimeInput(attrs={"type": "datetime-local"}),
-            "avaliadores": forms.CheckboxSelectMultiple,
+            "avaliadores": forms.CheckboxSelectMultiple(),
         }
 
     def clean_nota_final(self):
@@ -64,9 +91,18 @@ class BancaForm(forms.ModelForm):
             if nota > 100:
                 raise forms.ValidationError("A nota final não pode ser maior que 100.")
             if nota < 0:
-                raise forms.ValidationError("A nota final не pode ser negativa.")
+                raise forms.ValidationError("A nota final não pode ser negativa.")
 
         return nota  # Sempre retorne o valor limpo no final.
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Evita criar múltiplas bancas para a mesma monografia quando criando uma nova.
+        if not self.instance.pk:
+            self.fields["monografia"].queryset = Monografia.objects.filter(
+                banca__isnull=True
+            )
+        self.fields["avaliadores"].queryset = Professor.objects.select_related("user")
 
 
 class AlunoForm(forms.ModelForm):
@@ -144,12 +180,12 @@ class CustomSignupForm(forms.Form):
         user_type = self.cleaned_data["user_type"]
 
         if user_type == "aluno":
-            group = Group.objects.get(name="Alunos")
+            group, _ = Group.objects.get_or_create(name="Alunos")
             user.groups.add(group)
             Aluno.objects.create(user=user, matricula=self.cleaned_data["matricula"])
 
         elif user_type == "professor":
-            group = Group.objects.get(name="Professores")
+            group, _ = Group.objects.get_or_create(name="Professores")
             user.groups.add(group)
 
             Professor.objects.create(

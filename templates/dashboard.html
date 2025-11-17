@@ -14,26 +14,63 @@
     {% if monografia %}
     <p><strong>Título:</strong> {{ monografia.titulo }}</p>
     <p><strong>Status:</strong> {{ monografia.get_status_display }}</p>
+    <p><strong>Orientador:</strong> {{ monografia.orientador }}</p>
+    <p><strong>Data de Defesa:</strong> {{ monografia.data_defesa|default:"Ainda não definida" }}</p>
     <a href="{% url 'monografia_detail' monografia.pk %}" class="form-button"
         style="display:inline-block; width: auto; margin-top: 10px;">Ver
         Detalhes</a>
     {% else %}
     <p>Você ainda não possui uma monografia cadastrada no sistema.</p>
+    <a href="{% url 'monografia_new' %}" class="form-button"
+        style="display:inline-block; width: auto; margin-top: 10px;">Criar minha
+        monografia</a>
     {% endif %}
     {% elif user_type == 'Professor' %}
-    <h2>Monografias que você orienta</h2>
+    <h2>Monografias orientadas/coorientadas</h2>
     <ul style="list-style: none; padding-left: 0;">
         {% for monografia in monografias_orientadas %}
         <li style="margin-bottom: 10px;"><a
                 href="{% url 'monografia_detail' monografia.pk %}">{{
-                monografia.titulo }}</a> - por {{ monografia.aluno }}</li>
+                monografia.titulo }}</a> - {{ monografia.aluno }}</li>
         {% empty %}
         <li>Você não está orientando nenhuma monografia no momento.</li>
         {% endfor %}
     </ul>
+    {% if bancas_avaliador %}
+    <h3 style="margin-top: 20px;">Bancas onde você é avaliador</h3>
+    <ul style="list-style:none; padding-left:0;">
+        {% for banca in bancas_avaliador %}
+        <li>
+            <a href="{% url 'banca_detail' banca.pk %}">{{ banca.monografia.titulo }}</a>
+            em {{ banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     {% else %}
     <p>Seu perfil de usuário não está completamente configurado. Entre em
         contato com o administrador.</p>
     {% endif %}
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <h2>Resumo rápido</h2>
+    <p><strong>Total de monografias:</strong> {{ total_monografias }}</p>
+    <ul style="list-style:none; padding-left:0;">
+        {% for item in monografias_por_status %}
+        <li>{{ status_labels[item.status]|default:item.status }}: {{ item.total }}</li>
+        {% empty %}
+        <li>Nenhum dado ainda.</li>
+        {% endfor %}
+    </ul>
+    <h3>Próximas bancas</h3>
+    <ul style="list-style:none; padding-left:0;">
+        {% for banca in proximas_bancas %}
+        <li><a href="{% url 'banca_detail' banca.pk %}">{{ banca.monografia.titulo }}</a>
+            - {{ banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}</li>
+        {% empty %}
+        <li>Sem bancas agendadas.</li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}

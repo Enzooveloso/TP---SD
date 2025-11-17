@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Monografia{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <header class="form-header">
+        <h1>Excluir Monografia</h1>
+        <p>Tem certeza de que deseja excluir "{{ object.titulo }}"?</p>
+        <p style="color: var(--error-color); font-weight: bold;">Esta ação não pode ser desfeita.</p>
+    </header>
+
+    <section class="form-content">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="form-button" style="background-color: var(--error-color);">Sim, Excluir</button>
+            <a href="{% url 'monografia_detail' object.pk %}" class="form-button" style="background-color: #6c757d; margin-top: 10px; display: block; text-align:center;">Cancelar</a>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -5,3 +5,8 @@ __pycache__/
 
 # Arquivo de variáveis de ambiente
 .env
+
+# Uploads e logs
+media/
+logs/
+.venv/

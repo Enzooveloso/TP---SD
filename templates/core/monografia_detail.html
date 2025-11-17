@@ -22,7 +22,11 @@
     <hr style="margin: 20px 0;">
     <h3>Resumo e Palavras-Chave</h3>
     <p><strong>Resumo:</strong> {{ object.resumo|linebreaks }}</p>
+    <p><strong>Abstract:</strong> {{ object.abstract|linebreaks }}</p>
     <p><strong>Palavras-Chave:</strong> {{ object.palavras_chave }}</p>
+    {% if object.data_defesa %}
+    <p><strong>Data da Defesa:</strong> {{ object.data_defesa }}</p>
+    {% endif %}
 
     {% if object.arquivo_documento %}
     {% if can_manage_monografia %}
