@@ -106,6 +106,24 @@ docker-compose exec web poetry run python manage.py createsuperuser
 
 Siga as instruções para criar seu usuário administrador. Depois, acesse [http://localhost:8000/admin](https://www.google.com/search?q=http://localhost:8000/admin).
 
+**6. Popular o banco com dados de exemplo (seed)**
+
+Para iniciar o projeto já com usuários, monografias, bancas e histórico, execute:
+
+```bash
+poetry run python manage.py seed               # cria dados padrão
+poetry run python manage.py seed --count 20    # personaliza a quantidade de monografias/alunos
+poetry run python manage.py seed --clear       # limpa os dados antes de gerar novamente
+poetry run python manage.py seed --fake        # simula sem gravar no banco
+```
+
+No Docker Compose:
+
+```bash
+docker-compose exec backend poetry run python manage.py seed
+docker-compose exec backend poetry run python manage.py seed --clear
+```
+
 ## Estrutura do Projeto
 
   * `config/`: Contém as configurações globais do projeto Django (`settings.py`, `urls.py`).
