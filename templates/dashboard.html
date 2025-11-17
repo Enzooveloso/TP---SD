@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load user_filters %}
 
 {% block title %}Meu Dashboard{% endblock %}
 
@@ -29,9 +30,12 @@
     <h2>Monografias orientadas/coorientadas</h2>
     <ul style="list-style: none; padding-left: 0;">
         {% for monografia in monografias_orientadas %}
-        <li style="margin-bottom: 10px;"><a
-                href="{% url 'monografia_detail' monografia.pk %}">{{
-                monografia.titulo }}</a> - {{ monografia.aluno }}</li>
+        <li style="margin-bottom: 10px;">
+            <a href="{% url 'monografia_detail' monografia.pk %}">
+                {{ monografia.titulo|default:"(sem título)" }}
+            </a>
+            - {{ monografia.aluno }}
+        </li>
         {% empty %}
         <li>Você não está orientando nenhuma monografia no momento.</li>
         {% endfor %}
@@ -58,7 +62,7 @@
     <p><strong>Total de monografias:</strong> {{ total_monografias }}</p>
     <ul style="list-style:none; padding-left:0;">
         {% for item in monografias_por_status %}
-        <li>{{ status_labels[item.status]|default:item.status }}: {{ item.total }}</li>
+        <li>{{ status_labels|get_item:item.status|default:item.status }}: {{ item.total }}</li>
         {% empty %}
         <li>Nenhum dado ainda.</li>
         {% endfor %}

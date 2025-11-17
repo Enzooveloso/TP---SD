@@ -20,3 +20,14 @@ def is_aluno(user):
     Uso: {{ user|is_aluno }}
     """
     return user.groups.filter(name="Alunos").exists()
+
+
+@register.filter(name="get_item")
+def get_item(mapping, key):
+    """
+    Recupera um valor de um dicionário usando uma chave dinâmica.
+    Uso: {{ meu_dict|get_item:alguma_chave }}
+    """
+    if isinstance(mapping, dict):
+        return mapping.get(key)
+    return None

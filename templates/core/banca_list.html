@@ -7,11 +7,9 @@
 
 {% for banca in bancas %}
 <div class="card">
-    <h3><a href="{% url 'banca_detail' banca.pk %}">Banca para: {{
-            banca.monografia.titulo }}</a></h3>
+    <h3><a href="{% url 'banca_detail' banca.pk %}">Banca para: {{ banca.monografia.titulo|default:"(sem título)" }}</a></h3>
     <p><strong>Aluno(a):</strong> {{ banca.monografia.aluno }}</p>
-    <p><strong>Data da Defesa:</strong> {{
-        banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}</p>
+    <p><strong>Data da Defesa:</strong> {{ banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}</p>
     <p><strong>Local:</strong> {{ banca.local_defesa }}</p>
     <p><strong>Avaliadores:</strong>
         {% for avaliador in banca.avaliadores.all %}

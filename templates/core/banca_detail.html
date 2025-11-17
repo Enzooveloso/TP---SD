@@ -1,43 +1,39 @@
 {% extends 'base.html' %}
-{% load user_filters %} {% block title %}Detalhes da Banca: {{
-object.monografia.titulo }}{% endblock %}
+{% load user_filters %}
+{% block title %}Detalhes da Banca: {{ banca.monografia.titulo|default:"(sem título)" }}{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h1>Banca para: <a
-            href="{% url 'monografia_detail' object.monografia.pk %}">{{
-            object.monografia.titulo }}</a></h1>
+    <h1>Banca para:
+        <a href="{% url 'monografia_detail' banca.monografia.pk %}">
+            {{ banca.monografia.titulo|default:"(sem título)" }}
+        </a>
+    </h1>
     <hr style="margin: 20px 0;">
 
     <h3>Informações da Defesa</h3>
-    <p><strong>Data e Hora:</strong> {{ object.data_defesa|date:"d/m/Y \\à\\s H:i" }}</p>
-    <p><strong>Local:</strong> {{ object.local_defesa }}</p>
-    <p><strong>Nota Final:</strong> {{
-        object.nota_final|default:"Ainda não avaliada" }}</p>
+    <p><strong>Data e Hora:</strong> {{ banca.data_defesa|date:"d/m/Y \\à\\s H:i" }}</p>
+    <p><strong>Local:</strong> {{ banca.local_defesa }}</p>
+    <p><strong>Nota Final:</strong> {{ banca.nota_final|default:"Ainda não avaliada" }}</p>
 
     <h3 style="margin-top: 20px;">Membros da Banca</h3>
     <ul style="padding-left: 20px;">
-        {% for avaliador in object.avaliadores.all %}
-        <li>{{ avaliador.user.get_full_name|default:avaliador.user.username
-            }}</li>
+        {% for avaliador in banca.avaliadores.all %}
+        <li>{{ avaliador.user.get_full_name|default:avaliador.user.username }}</li>
         {% empty %}
         <li>Nenhum avaliador cadastrado.</li>
         {% endfor %}
     </ul>
 
     <div style="margin-top: 30px;">
-        <a href="{% url 'monografia_detail' object.monografia.pk %}"
-            class="form-button"
-            style="display:inline-block; width: auto; background-color: #6c757d;">Voltar
-            para Monografia</a>
+        <a href="{% url 'monografia_detail' banca.monografia.pk %}" class="form-button"
+            style="display:inline-block; width: auto; background-color: #6c757d;">Voltar para Monografia</a>
 
         {% if user.is_staff or user|is_professor %}
-        <a href="{% url 'banca_edit' object.pk %}" class="form-button"
-            style="display:inline-block; width: auto; background-color: #ffc107;">Editar
-            Banca</a>
-        <a href="{% url 'banca_delete' object.pk %}" class="form-button"
-            style="display:inline-block; width: auto; background-color: #dc3545;">Excluir
-            Banca</a>
+        <a href="{% url 'banca_edit' banca.pk %}" class="form-button"
+            style="display:inline-block; width: auto; background-color: #ffc107;">Editar Banca</a>
+        <a href="{% url 'banca_delete' banca.pk %}" class="form-button"
+            style="display:inline-block; width: auto; background-color: #dc3545;">Excluir Banca</a>
         {% endif %}
     </div>
 </div>

@@ -136,6 +136,21 @@ class MonografiaDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         monografia = self.get_object()
         user = self.request.user
+        # Nomes legíveis com fallback para username
+        context["autor_nome"] = (
+            monografia.aluno.user.get_full_name() or monografia.aluno.user.username
+        )
+        context["orientador_nome"] = (
+            monografia.orientador.user.get_full_name()
+            or monografia.orientador.user.username
+        )
+        if monografia.coorientador:
+            context["coorientador_nome"] = (
+                monografia.coorientador.user.get_full_name()
+                or monografia.coorientador.user.username
+            )
+        else:
+            context["coorientador_nome"] = None
 
         can_manage_monografia = False
         can_manage_banca = False
@@ -349,6 +364,7 @@ class BancaListView(LoginRequiredMixin, ListView):
 class BancaDetailView(LoginRequiredMixin, DetailView):
     model = Banca
     template_name = "core/banca_detail.html"
+    context_object_name = "banca"
 
     def get_queryset(self):
         queryset = (
@@ -361,19 +377,9 @@ class BancaDetailView(LoginRequiredMixin, DetailView):
             )
             .prefetch_related("avaliadores__user")
         )
-        user = self.request.user
-        if user.is_staff:
-            return queryset
-        if hasattr(user, "professor_profile"):
-            professor = user.professor_profile
-            return queryset.filter(
-                Q(monografia__orientador=professor)
-                | Q(monografia__coorientador=professor)
-                | Q(avaliadores=professor)
-            ).distinct()
-        if hasattr(user, "aluno_profile"):
-            return queryset.filter(monografia__aluno=user.aluno_profile)
-        return queryset.none()
+        # O detalhe da banca pode ser visualizado por usuários logados;
+        # restrições de edição permanecem em BancaUpdateView.
+        return queryset
 
 
 class BancaCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -444,7 +450,7 @@ class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         """
         Permite a edição apenas se o utilizador for admin ou o orientador/coorientador
-        da monografia associada à banca.
+        da monografia associada à banca. Avaliadores da banca também podem editar.
         """
         user = self.request.user
         if user.is_staff:
@@ -457,9 +463,13 @@ class BancaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         if hasattr(user, "professor_profile"):
             professor_profile = user.professor_profile
             # Verifica se o professor logado é o orientador OU o coorientador
-            return monografia.orientador == professor_profile or (
-                monografia.coorientador and monografia.coorientador == professor_profile
-            )
+            if monografia.orientador == professor_profile:
+                return True
+            if monografia.coorientador and monografia.coorientador == professor_profile:
+                return True
+            # Permite que avaliadores também editem/atualizem a banca
+            if banca.avaliadores.filter(pk=professor_profile.pk).exists():
+                return True
 
         return False
 

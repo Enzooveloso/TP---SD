@@ -10,14 +10,9 @@
     <hr style="margin: 20px 0;">
 
     <h3>Autoria e Orientação</h3>
-    <p><strong>Autor:</strong> {{
-        object.aluno.user.get_full_name|default:object.aluno.user.username }}
-        (Matrícula: {{ object.aluno.matricula }})</p>
-    <p><strong>Orientador:</strong> {{
-        object.orientador.user.get_full_name|default:object.orientador.user.username
-        }}</p>
-    {% if object.coorientador %}<p><strong>Coorientador:</strong> {{
-        object.coorientador.user.get_full_name }}</p>{% endif %}
+    <p><strong>Autor:</strong> {{ autor_nome }} (Matrícula: {{ object.aluno.matricula }})</p>
+    <p><strong>Orientador:</strong> {{ orientador_nome }}</p>
+    {% if coorientador_nome %}<p><strong>Coorientador:</strong> {{ coorientador_nome }}</p>{% endif %}
 
     <hr style="margin: 20px 0;">
     <h3>Resumo e Palavras-Chave</h3>

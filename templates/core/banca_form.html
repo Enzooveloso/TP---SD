@@ -1,13 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar Banca{% else %}Agendar Nova Banca{% endif
-%}{% endblock %}
+{% block title %}{% if object %}Editar Banca{% else %}Agendar Nova Banca{% endif %}{% endblock %}
 
 {% block content %}
 <div class="form-container">
     <header class="form-header">
-        <h1>{% if object %}Editar Banca{% else %}Agendar Nova Banca{% endif
-            %}</h1>
+        <h1>{% if object %}Editar Banca{% else %}Agendar Nova Banca{% endif %}</h1>
         {% if not object and form.instance.monografia %}
         <p>Agendando a defesa para: <strong>{{ form.instance.monografia.titulo
                 }}</strong></p>
