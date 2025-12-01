@@ -97,7 +97,13 @@ docker-compose up --build
 Após a conclusão do build, a aplicação estará disponível no seu navegador no seguinte endereço:
 [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
 
-**5. Acessando o Admin:**
+**5. Documentação da API (Swagger/Redoc):**
+
+- Swagger UI: `http://localhost:8000/api/docs/swagger/`
+- Redoc: `http://localhost:8000/api/docs/redoc/`
+- Esquema OpenAPI: `http://localhost:8000/api/schema/`
+
+**6. Acessando o Admin:**
 Para criar um superusuário e acessar a área administrativa do Django, execute o seguinte comando em um novo terminal:
 
 ```bash
@@ -106,7 +112,7 @@ docker-compose exec web poetry run python manage.py createsuperuser
 
 Siga as instruções para criar seu usuário administrador. Depois, acesse [http://localhost:8000/admin](https://www.google.com/search?q=http://localhost:8000/admin).
 
-**6. Popular o banco com dados de exemplo (seed)**
+**7. Popular o banco com dados de exemplo (seed)**
 
 Para iniciar o projeto já com usuários, monografias, bancas e histórico, execute:
 
