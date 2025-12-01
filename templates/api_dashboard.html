@@ -4,10 +4,28 @@
 
 {% block content %}
 <h1>Dashboard (API)</h1>
-<p>Exemplos de integração usando fetch com os endpoints REST.</p>
+<p>Exemplos de integração usando fetch com os endpoints REST públicos.</p>
 
-<h2>Monografias aprovadas (público)</h2>
+<section style="display:flex; flex-wrap:wrap; gap:16px; margin-top:12px;">
+    <div class="card" style="flex:1 1 200px; min-width:220px;">
+        <h3>Total de monografias aprovadas</h3>
+        <p id="total-monografias" style="font-size:1.6rem; font-weight:bold;">--</p>
+    </div>
+    <div class="card" style="flex:1 1 200px; min-width:220px;">
+        <h3>Total de professores</h3>
+        <p id="total-professores" style="font-size:1.6rem; font-weight:bold;">--</p>
+    </div>
+    <div class="card" style="flex:1 1 200px; min-width:220px;">
+        <h3>Status mais frequente</h3>
+        <p id="status-top" style="font-size:1.6rem; font-weight:bold;">--</p>
+    </div>
+</section>
+
+<h2 style="margin-top:24px;">Monografias aprovadas (público)</h2>
 <pre id="monografias-aprovadas" style="padding:12px; background:#f7f7f7; border-radius:6px; overflow:auto; max-height:200px;">Carregando...</pre>
+
+<h2 style="margin-top:24px;">Professores (público)</h2>
+<pre id="professores-lista" style="padding:12px; background:#f7f7f7; border-radius:6px; overflow:auto; max-height:200px;">Carregando...</pre>
 
 <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:20px;">
     <div style="flex:1 1 300px;">
@@ -33,8 +51,16 @@ async function fetchJSON(url) {
 
 async function loadMonografias() {
     const data = await fetchJSON('/api/public/monografias/');
-    document.getElementById('monografias-aprovadas').textContent =
-        JSON.stringify(data, null, 2);
+    const total = data.count ?? data.length ?? 0;
+    document.getElementById('total-monografias').textContent = total;
+    document.getElementById('monografias-aprovadas').textContent = JSON.stringify(data, null, 2);
+}
+
+async function loadProfessores() {
+    const data = await fetchJSON('/api/public/professores/');
+    const total = data.count ?? data.length ?? 0;
+    document.getElementById('total-professores').textContent = total;
+    document.getElementById('professores-lista').textContent = JSON.stringify(data, null, 2);
 }
 
 function buildChart(ctxId, labels, values, label) {
@@ -64,10 +90,13 @@ async function loadCharts() {
 
     const porStatus = await fetchJSON('/api/stats/monografias_por_status/');
     buildChart('chartStatus', porStatus.map(i => i.status), porStatus.map(i => i.total), 'Total');
+    const top = porStatus.sort((a, b) => b.total - a.total)[0];
+    document.getElementById('status-top').textContent = top ? `${top.status} (${top.total})` : '--';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadMonografias();
+    loadProfessores();
     loadCharts();
 });
 </script>

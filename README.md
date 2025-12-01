@@ -102,6 +102,7 @@ Após a conclusão do build, a aplicação estará disponível no seu navegador 
 - Swagger UI: `http://localhost:8000/api/docs/swagger/`
 - Redoc: `http://localhost:8000/api/docs/redoc/`
 - Esquema OpenAPI: `http://localhost:8000/api/schema/`
+- Login/logout da API (para testar no Swagger usando Session Auth): `http://localhost:8000/api/auth/login/` e `http://localhost:8000/api/auth/logout/`
 
 **6. Acessando o Admin:**
 Para criar um superusuário e acessar a área administrativa do Django, execute o seguinte comando em um novo terminal:
@@ -152,7 +153,11 @@ O sistema é estruturado em torno dos seguintes modelos principais:
 
 A próxima etapa do desenvolvimento incluirá:
 
-  * Implementação de uma **API REST** com Django REST Framework.
-  * Criação de **endpoints públicos** (somente leitura) para listar monografias e professores.
-  * Criação de **endpoints restritos** (com autenticação) para o CRUD de monografias e agendamento de bancas.
-  * Desenvolvimento de funcionalidades extras, como a geração de atas e dashboards com gráficos.
+  * Implementação de uma **API REST** com Django REST Framework. ✅
+  * Criação de **endpoints públicos** (somente leitura) para listar monografias e professores. ✅ (`/api/public/monografias/`, `/api/public/professores/`)
+  * Criação de **endpoints restritos** (com autenticação) para o CRUD de monografias e agendamento de bancas. ✅ (`/api/monografias/`, `/api/bancas/`)
+  * Funcionalidades extras:
+    - **Geração automática de ata de defesa (PDF):** `/api/bancas/{id}/ata/` retorna o PDF preenchido com dados da banca e nota.
+    - **Dashboard com gráficos (Chart.js):** `/api-dashboard/` consome endpoints de estatísticas (`/api/stats/monografias_por_ano/`, `/api/stats/monografias_por_area/`, `/api/stats/monografias_por_status/`).
+    - **Histórico de alterações (auditoria):** Simple History em todos os modelos auditáveis, com `history_user`. Endpoint de histórico via API: `/api/monografias/{id}/history/`; no painel: `/monografias/{id}/history/`.
+    - **Frontend JS integrado à API:** exemplo de integração no `/api-dashboard/`, carregando dados via `fetch` e renderizando gráficos.
