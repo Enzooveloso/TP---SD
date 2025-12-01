@@ -191,6 +191,7 @@ ACCOUNT_RATE_LIMITS = {"login_failed": "10/5m"}
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -255,3 +256,13 @@ LOGGING = {
 # Simple History settings
 SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 SIMPLE_HISTORY_REVERT_DISABLED = False
+
+# drf-spectacular settings (Swagger/Redoc)
+SPECTACULAR_SETTINGS = {
+    "TITLE": "API - Sistema de Monografias",
+    "DESCRIPTION": "Documentação da API REST",
+    "VERSION": "1.0.0",
+    "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
+    # Expõe autenticação por sessão (cookie) e Basic Auth para testes no Swagger
+    "SECURITY": [{"basicAuth": []}, {"cookieAuth": []}],
+}

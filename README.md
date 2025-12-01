@@ -102,7 +102,10 @@ Após a conclusão do build, a aplicação estará disponível no seu navegador 
 - Swagger UI: `http://localhost:8000/api/docs/swagger/`
 - Redoc: `http://localhost:8000/api/docs/redoc/`
 - Esquema OpenAPI: `http://localhost:8000/api/schema/`
-- Login/logout da API (para testar no Swagger usando Session Auth): `http://localhost:8000/api/auth/login/` e `http://localhost:8000/api/auth/logout/`
+- Login/logout da API (Session Auth): `http://localhost:8000/api/auth/login/` e `http://localhost:8000/api/auth/logout/`
+- No Swagger, clique em **Authorize** e use:
+  - `basicAuth` com usuário/senha do Django (recomendado para testar rápido); ou
+  - mantenha-se autenticado via sessão: faça login em `/api/auth/login/` (ou pelo admin) e o cookie será usado automaticamente.
 
 **6. Acessando o Admin:**
 Para criar um superusuário e acessar a área administrativa do Django, execute o seguinte comando em um novo terminal:
