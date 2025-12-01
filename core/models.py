@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from django.conf import settings  # Para referenciar o modelo User padrão
 from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.utils import timezone
@@ -27,6 +28,9 @@ class Professor(models.Model):
         max_length=2, choices=Titulacao.choices, verbose_name="Titulação"
     )
     area_pesquisa = models.CharField(max_length=255, verbose_name="Área de Pesquisa")
+    history = HistoricalRecords(
+        history_id_field=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    )
 
     def __str__(self):
         # Retorna o nome completo do usuário associado para uma melhor representação no admin
@@ -46,6 +50,9 @@ class Aluno(models.Model):
 
     # Campo específico do aluno
     matricula = models.CharField(max_length=20, unique=True, verbose_name="Matrícula")
+    history = HistoricalRecords(
+        history_id_field=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    )
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
@@ -70,7 +77,10 @@ class Monografia(models.Model):
     palavras_chave = models.CharField(
         max_length=255, verbose_name="Palavras-Chave", help_text="Separadas por vírgula"
     )
-    history = HistoricalRecords()  # para ter histórico de mudanças
+    # Mantemos history_id inteiro para compatibilidade com histórico existente
+    history = HistoricalRecords(
+        history_id_field=models.AutoField(primary_key=True)
+    )  # para ter histórico de mudanças
     data_defesa = models.DateField(
         null=True,
         blank=True,
@@ -164,6 +174,9 @@ class Banca(models.Model):
         blank=True,
         verbose_name="Nota Final",
         validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+    history = HistoricalRecords(
+        history_id_field=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     )
 
     def __str__(self):

@@ -2,6 +2,14 @@ from rest_framework import serializers
 from core.models import Monografia, Professor, Banca
 
 
+class HistoryRecordSerializer(serializers.Serializer):
+    history_id = serializers.CharField()
+    history_date = serializers.DateTimeField()
+    history_type = serializers.CharField()
+    history_user = serializers.CharField(allow_null=True)
+    changes = serializers.ListField(child=serializers.DictField(), required=False)
+
+
 class ProfessorSerializer(serializers.ModelSerializer):
     nome = serializers.CharField(source="user.get_full_name", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
@@ -33,6 +41,28 @@ class BancaSerializer(serializers.ModelSerializer):
             "nota_final",
         ]
         read_only_fields = []
+
+    def _apply_history_user(self, instance):
+        history_user = self.context.get("history_user")
+        if history_user:
+            instance._history_user = history_user
+
+    def create(self, validated_data):
+        avaliadores = validated_data.pop("avaliadores", [])
+        instance = Banca(**validated_data)
+        self._apply_history_user(instance)
+        instance.save()
+        if avaliadores:
+            instance.avaliadores.set(avaliadores)
+        return instance
+
+    def update(self, instance, validated_data):
+        avaliadores = validated_data.pop("avaliadores", None)
+        self._apply_history_user(instance)
+        instance = super().update(instance, validated_data)
+        if avaliadores is not None:
+            instance.avaliadores.set(avaliadores)
+        return instance
 
 
 class MonografiaSerializer(serializers.ModelSerializer):
@@ -78,10 +108,22 @@ class MonografiaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Orientador e coorientador devem ser diferentes.")
         return attrs
 
+    def _apply_history_user(self, instance):
+        history_user = self.context.get("history_user")
+        if history_user:
+            instance._history_user = history_user
+
     def create(self, validated_data):
         user = self.context["request"].user
         if hasattr(user, "aluno_profile"):
             validated_data["aluno"] = user.aluno_profile
         elif "aluno" not in validated_data:
             raise serializers.ValidationError("Campo aluno é obrigatório para administradores.")
-        return super().create(validated_data)
+        instance = Monografia(**validated_data)
+        self._apply_history_user(instance)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        self._apply_history_user(instance)
+        return super().update(instance, validated_data)

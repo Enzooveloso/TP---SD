@@ -10,10 +10,26 @@ from core.api.serializers import (
     MonografiaSerializer,
     ProfessorSerializer,
     BancaSerializer,
+    HistoryRecordSerializer,
 )
 from core.api.permissions import IsAlunoOwnerOrOrientador, IsProfessorOrAdminBanca
 from core.api.filters import MonografiaFilter
 from core.utils.pdf import gerar_ata_defesa_pdf
+
+
+class HistoryUserMixin:
+    """
+    Fornece um utilitário para pegar o usuário autenticado (ou None) para gravar em history_user.
+    """
+
+    def _get_history_user(self, request):
+        user = getattr(request, "user", None)
+        if user and getattr(user, "is_authenticated", False):
+            return user
+        return None
+
+    def _attach_history_user(self, serializer):
+        serializer.context["history_user"] = self._get_history_user(self.request)
 
 
 class MonografiaPublicViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,7 +52,7 @@ class ProfessorPublicViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["user__first_name", "user__last_name", "area_pesquisa"]
 
 
-class MonografiaViewSet(viewsets.ModelViewSet):
+class MonografiaViewSet(HistoryUserMixin, viewsets.ModelViewSet):
     queryset = Monografia.objects.select_related(
         "orientador__user", "coorientador__user", "aluno__user"
     )
@@ -56,26 +72,48 @@ class MonografiaViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
+        self._attach_history_user(serializer)
         serializer.save()
 
     def perform_update(self, serializer):
+        self._attach_history_user(serializer)
         serializer.save()
 
-    @action(detail=True, methods=["get"], permission_classes=[permissions.IsAuthenticated])
-    def historico(self, request, pk=None):
+    def perform_destroy(self, instance):
+        instance._history_user = self._get_history_user(self.request)
+        instance.delete()
+
+    @action(
+        detail=True,
+        methods=["get"],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path="history",
+    )
+    def history(self, request, pk=None):
         monografia = self.get_object()
-        history = [
-            {
-                "data": h.history_date,
-                "usuario": str(h.history_user) if h.history_user else None,
-                "tipo": h.get_history_type_display(),
-            }
-            for h in monografia.history.all()
-        ]
-        return Response(history)
+        records = list(monografia.history.order_by("-history_date", "-history_id"))
+        history_payload = []
+        for idx, registro in enumerate(records):
+            anterior = records[idx + 1] if idx + 1 < len(records) else None
+            changes = []
+            if anterior:
+                delta = registro.diff_against(anterior)
+                for change in delta.changes:
+                    changes.append({"field": change.field, "old": change.old, "new": change.new})
+            history_payload.append(
+                {
+                    "history_id": str(registro.history_id),
+                    "history_date": registro.history_date,
+                    "history_type": registro.history_type,
+                    "history_user": registro.history_user.get_username() if registro.history_user else None,
+                    "changes": changes,
+                }
+            )
+        serializer = HistoryRecordSerializer(history_payload, many=True)
+        return Response(serializer.data)
 
 
-class BancaViewSet(viewsets.ModelViewSet):
+class BancaViewSet(HistoryUserMixin, viewsets.ModelViewSet):
     queryset = Banca.objects.select_related(
         "monografia__aluno__user",
         "monografia__orientador__user",
@@ -98,10 +136,29 @@ class BancaViewSet(viewsets.ModelViewSet):
                 raise exceptions.PermissionDenied("Somente orientador ou coorientador podem agendar a banca.")
         if hasattr(monografia, "banca"):
             raise exceptions.PermissionDenied("Esta monografia já possui banca.")
+        history_user = self._get_history_user(self.request)
+        self._attach_history_user(serializer)
         serializer.save(monografia=monografia)
-        if monografia.data_defesa != serializer.validated_data.get("data_defesa").date():
-            monografia.data_defesa = serializer.validated_data.get("data_defesa").date()
+        defesa_data = serializer.validated_data.get("data_defesa")
+        if defesa_data and monografia.data_defesa != defesa_data.date():
+            monografia._history_user = history_user
+            monografia.data_defesa = defesa_data.date()
             monografia.save(update_fields=["data_defesa"])
+
+    def perform_update(self, serializer):
+        history_user = self._get_history_user(self.request)
+        self._attach_history_user(serializer)
+        instance = serializer.save()
+        monografia = instance.monografia
+        defesa_data = serializer.validated_data.get("data_defesa")
+        if defesa_data and monografia.data_defesa != defesa_data.date():
+            monografia._history_user = history_user
+            monografia.data_defesa = defesa_data.date()
+            monografia.save(update_fields=["data_defesa"])
+
+    def perform_destroy(self, instance):
+        instance._history_user = self._get_history_user(self.request)
+        instance.delete()
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated, IsProfessorOrAdminBanca])
     def registrar_nota(self, request, pk=None):
@@ -110,6 +167,7 @@ class BancaViewSet(viewsets.ModelViewSet):
         if nota is None:
             return Response({"detail": "nota_final é obrigatória"}, status=status.HTTP_400_BAD_REQUEST)
         banca.nota_final = nota
+        banca._history_user = self._get_history_user(request)
         banca.save(update_fields=["nota_final"])
         return Response(self.get_serializer(banca).data)
 
